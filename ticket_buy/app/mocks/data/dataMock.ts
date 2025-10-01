@@ -1,6 +1,4 @@
-// Mock data
-
-const Products = [
+const Productos = [
   {
     id: '1',
     name: 'Hambúrguer Clássico',
@@ -51,8 +49,15 @@ const Products = [
   },
 ];
 
-const categories = [
-  { id: 'lanches', name: 'Lanches' },
-  { id: 'bebidas', name: 'Bebidas' },
-  { id: 'sobremesas', name: 'Sobremesas' },
-];
+// Tipos
+type ProductType = {
+  id: string;
+  name: string;
+  price: number;
+  description: string;
+  image: string;
+  category: 'lanches' | 'bebidas' | 'sobremesas';
+};
+
+export { Productos, ProductType };
+
