@@ -12,75 +12,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Productos } from "../mocks/data/dataMock";
 import { CartItem, Order, OrderStatus, Product } from "../mocks/types/types";
-
-// Mock data
-const initialProducts: Product[] = [
-  {
-    id: "1",
-    name: "Hambúrguer Clássico",
-    price: 18.9,
-    description: "Pão, hambúrguer bovino, queijo, alface e tomate.",
-    image: "https://placehold.co/300x200/4f46e5/white?text=Hambúrguer",
-    category: "lanches",
-  },
-  {
-    id: "2",
-    name: "Cheeseburger Duplo",
-    price: 24.9,
-    description: "Dois hambúrgueres, queijo, cebola caramelizada.",
-    image: "https://placehold.co/300x200/4f46e5/white?text=Cheeseburger",
-    category: "lanches",
-  },
-  {
-    id: "3",
-    name: "Refrigerante 500ml",
-    price: 6.5,
-    description: "Coca-Cola, Guaraná ou Fanta.",
-    image: "https://placehold.co/300x200/10b981/white?text=Refrigerante",
-    category: "bebidas",
-  },
-  {
-    id: "4",
-    name: "Refrigerante 500ml",
-    price: 6.5,
-    description: "Coca-Cola, Guaraná ou Fanta.",
-    image: "https://placehold.co/300x200/10b981/white?text=Refrigerante",
-    category: "bebidas",
-  },
-  {
-    id: "5",
-    name: "Refrigerante 500ml",
-    price: 6.5,
-    description: "Coca-Cola, Guaraná ou Fanta.",
-    image: "https://placehold.co/300x200/10b981/white?text=Refrigerante",
-    category: "bebidas",
-  },
-  {
-    id: "6",
-    name: "Suco Natural",
-    price: 8.0,
-    description: "Laranja, abacaxi ou limão.",
-    image: "https://placehold.co/300x200/10b981/white?text=Suco",
-    category: "bebidas",
-  },
-  {
-    id: "7",
-    name: "Milkshake de Chocolate",
-    price: 14.9,
-    description: "Sorvete de chocolate, leite e calda.",
-    image: "https://placehold.co/300x200/ec4899/white?text=Milkshake",
-    category: "sobremesas",
-  },
-  {
-    id: "8",
-    name: "Brownie com Sorvete",
-    price: 16.5,
-    description: "Brownie quente com sorvete de baunilha.",
-    image: "https://placehold.co/300x200/ec4899/white?text=Brownie",
-    category: "sobremesas",
-  },
-];
 
 const categories = [
   { id: "lanches", name: "Lanches" },
@@ -92,7 +25,7 @@ type CategoryId = (typeof categories)[number]["id"];
 
 export default function App() {
   // Estados
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>(Productos);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [currentView, setCurrentView] = useState<

@@ -1,4 +1,6 @@
-const Productos = [
+import { Product } from "../types/types";
+
+const Productos: Product[] = [
   {
     id: '1',
     name: 'Hambúrguer Clássico',
