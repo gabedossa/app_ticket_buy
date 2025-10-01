@@ -1,7 +1,26 @@
-const categorias = [
-  { id: 'lanches', name: 'Lanches' },
-  { id: 'bebidas', name: 'Bebidas' },
-  { id: 'sobremesas', name: 'Sobremesas' },
-];
+// Tipos
+type Product = {
+  id: string;
+  name: string;
+  price: number;
+  description: string;
+  image: string;
+  category: 'lanches' | 'bebidas' | 'sobremesas';
+};
 
-export { categorias };
+type CartItem = {
+  product: Product;
+  quantity: number;
+};
+type OrderStatus = 'em preparo' | 'pronto' | 'entregue';
+
+type Order = {
+  id: string;
+  items: CartItem[];
+  total: number;
+  status: OrderStatus;
+  timestamp: Date;
+};
+
+export { CartItem, Order, OrderStatus, Product };
+
