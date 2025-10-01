@@ -24,7 +24,6 @@ const categories = [
 type CategoryId = (typeof categories)[number]["id"];
 
 export default function App() {
-  // Estados
   const [products, setProducts] = useState<Product[]>(Productos);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
