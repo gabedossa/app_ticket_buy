@@ -1,4 +1,3 @@
-// app/constants/categories.ts
 export const categories = [
   { id: "lanches", name: "Lanches" },
   { id: "bebidas", name: "Bebidas" },

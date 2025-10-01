@@ -1,17 +1,19 @@
 // app/screens/MainApp.tsx
 import React, { useState } from "react";
-import { Productos } from "../../mocks/data/dataMock";
-import { CartItem, Order, Product } from "../../mocks/types/types";
-import AdminScreen from "./AdminScreen";
-import CartScreen from "./CartScreen";
-import MenuScreen from "./MenuScreen";
-import ProductFormScreen from "./ProductFormScreen";
+import { Productos as productsMock } from "../../app/mocks/data/dataMock";
+import { CartItem, Order, Product } from "../../app/mocks/types/types";
+import AdminScreen from "../AdminScreen/adminScreen";
+import CartScreen from "../CartScreen/CartScreen";
+import MenuScreen from "../menuScreen/MenuScreen";
+import ProductFormScreen from "../ProductScreen/ProductForm";
 
 export default function MainApp() {
-  const [products, setProducts] = useState<Product[]>(Productos);
+  const [products, setProducts] = useState<Product[]>(productsMock);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [currentView, setCurrentView] = useState<"menu" | "cart" | "admin" | "productForm">("menu");
+  const [currentView, setCurrentView] = useState<
+    "menu" | "cart" | "admin" | "productForm"
+  >("menu");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [newProduct, setNewProduct] = useState<Omit<Product, "id">>({
     name: "",
@@ -56,7 +58,6 @@ export default function MainApp() {
   const getTotal = () =>
     cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
-  // Checkout
   const handleCheckout = () => {
     if (cart.length === 0) return;
     const newOrder: Order = {
@@ -69,10 +70,9 @@ export default function MainApp() {
     setOrders((prev) => [newOrder, ...prev]);
     setCart([]);
     setCurrentView("menu");
-    alert("Pedido Realizado!"); // ou use Alert do react-native
+    alert("Pedido Realizado! Seu pedido foi enviado para a cozinha.");
   };
 
-  // Admin functions
   const saveProduct = () => {
     if (editingProduct) {
       setProducts((prev) =>
@@ -82,11 +82,20 @@ export default function MainApp() {
             : p
         )
       );
+      alert("Produto atualizado!");
     } else {
       const productToAdd: Product = { ...newProduct, id: `prod-${Date.now()}` };
       setProducts((prev) => [productToAdd, ...prev]);
+      alert("Novo produto adicionado!");
     }
-    resetProductForm();
+    setEditingProduct(null);
+    setNewProduct({
+      name: "",
+      price: 0,
+      description: "",
+      image: "",
+      category: "lanches",
+    });
     setCurrentView("admin");
   };
 
@@ -96,22 +105,12 @@ export default function MainApp() {
 
   const updateOrderStatus = (orderId: string, status: string) => {
     setOrders((prev) =>
-      prev.map((order) => (order.id === orderId ? { ...order, status } : order))
+      prev.map((order) =>
+        order.id === orderId ? { ...order, status: status as Order["status"] } : order
+      )
     );
   };
 
-  const resetProductForm = () => {
-    setEditingProduct(null);
-    setNewProduct({
-      name: "",
-      price: 0,
-      description: "",
-      image: "",
-      category: "lanches",
-    });
-  };
-
-  // Renderização condicional
   switch (currentView) {
     case "cart":
       return (
@@ -131,7 +130,14 @@ export default function MainApp() {
           products={products}
           onBack={() => setCurrentView("menu")}
           onCreateProduct={() => {
-            resetProductForm();
+            setEditingProduct(null);
+            setNewProduct({
+              name: "",
+              price: 0,
+              description: "",
+              image: "",
+              category: "lanches",
+            });
             setCurrentView("productForm");
           }}
           onEditProduct={(product) => {
