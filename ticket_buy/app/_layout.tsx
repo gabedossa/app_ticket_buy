@@ -1,6 +1,7 @@
+// app/_layout.tsx
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Slot } from 'expo-router'; // 👈 Importe Slot
 import { StatusBar } from 'expo-status-bar';
 
 export default function RootLayout() {
@@ -8,24 +9,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        {/* Tela principal */}
-        <Stack.Screen
-          name="index"
-          options={{
-            headerShown: false,
-            title: 'Ifood',
-          }}
-        />
-        {/* Modal (se precisar no futuro) */}
-        <Stack.Screen
-          name="modal"
-          options={{
-            presentation: 'modal',
-            title: 'Modal',
-          }}
-        />
-      </Stack>
+      <Slot /> {/* 👈 Isso renderiza app/index.tsx */}
       <StatusBar style="auto" />
     </ThemeProvider>
   );

@@ -33,14 +33,15 @@ export default function MenuScreen({
 }: MenuScreenProps) {
   return (
     <SafeAreaView style={styles.container}>
-      <View style={[styles.header, { paddingHorizontal: 16, paddingTop: 16 }]}>
+      {/* Header com título e botões de navegação */}
+      <View style={styles.header}>
         <Text style={styles.headerTitle}>Ifood</Text>
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <View style={styles.navButtons}>
           <TouchableOpacity onPress={onGoToAdmin} style={styles.adminButton}>
             <Text style={styles.adminButtonText}>Admin</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={onGoToCart} style={{ marginLeft: 16 }}>
-            <Text style={{ fontSize: 24 }}>🛒</Text>
+          <TouchableOpacity onPress={onGoToCart} style={styles.cartButton}>
+            <Text style={styles.cartIcon}>🛒</Text>
             {cart.length > 0 && (
               <View style={styles.cartBadge}>
                 <Text style={styles.cartBadgeText}>
@@ -52,10 +53,11 @@ export default function MenuScreen({
         </View>
       </View>
 
+      {/* Chips de categoria */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12 }}
+        contentContainerStyle={styles.categoriesContainer}
       >
         {categories.map((category) => (
           <TouchableOpacity
@@ -69,8 +71,7 @@ export default function MenuScreen({
             <Text
               style={[
                 styles.categoryChipText,
-                activeCategory === category.id &&
-                  styles.categoryChipTextActive,
+                activeCategory === category.id && styles.categoryChipTextActive,
               ]}
             >
               {category.name}
@@ -79,15 +80,16 @@ export default function MenuScreen({
         ))}
       </ScrollView>
 
+      {/* Lista de produtos */}
       <FlatList
         data={products.filter((p) => p.category === activeCategory)}
         keyExtractor={(item) => item.id}
         numColumns={2}
-        contentContainerStyle={{ paddingHorizontal: 8 }}
+        contentContainerStyle={styles.productsContainer}
         renderItem={({ item }) => (
           <View style={styles.productCard}>
             <Image source={{ uri: item.image }} style={styles.productImage} />
-            <View style={{ padding: 12 }}>
+            <View style={styles.productInfo}>
               <Text style={styles.productName}>{item.name}</Text>
               <Text style={styles.productDescription} numberOfLines={2}>
                 {item.description}
@@ -112,34 +114,71 @@ export default function MenuScreen({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB" },
+  container: {
+    flex: 1,
+    backgroundColor: "#F9FAFB",
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingBottom: 16,
-    backgroundColor: "#FFF",
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
   },
-  headerTitle: { fontSize: 22, fontWeight: "bold", color: "#1F2937" },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#1F2937",
+  },
+  navButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   adminButton: {
     backgroundColor: "#E5E7EB",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
   },
-  adminButtonText: { fontSize: 14 },
+  adminButtonText: {
+    fontSize: 14,
+    color: "#374151",
+    fontWeight: "500",
+  },
+  cartButton: {
+    position: "relative",
+    marginLeft: 12,
+    padding: 6,
+  },
+  cartIcon: {
+    fontSize: 26,
+    color: "#1F2937", // Cor explícita para garantir visibilidade
+  },
   cartBadge: {
     position: "absolute",
     top: -4,
-    right: -8,
+    right: -6,
     backgroundColor: "#EF4444",
     borderRadius: 10,
-    width: 20,
-    height: 20,
+    width: 18,
+    height: 18,
     justifyContent: "center",
     alignItems: "center",
+    zIndex: 10,
   },
-  cartBadgeText: { color: "#FFFFFF", fontSize: 12, fontWeight: "bold" },
+  cartBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "bold",
+  },
+  categoriesContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
   categoryChip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -147,9 +186,20 @@ const styles = StyleSheet.create({
     backgroundColor: "#E5E7EB",
     marginRight: 10,
   },
-  categoryChipActive: { backgroundColor: "#3B82F6" },
-  categoryChipText: { color: "#374151", fontWeight: "500" },
-  categoryChipTextActive: { color: "#FFFFFF" },
+  categoryChipActive: {
+    backgroundColor: "#3B82F6",
+  },
+  categoryChipText: {
+    color: "#374151",
+    fontWeight: "500",
+  },
+  categoryChipTextActive: {
+    color: "#FFFFFF",
+  },
+  productsContainer: {
+    paddingHorizontal: 8,
+    paddingBottom: 16,
+  },
   productCard: {
     flex: 1,
     margin: 8,
@@ -167,7 +217,14 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
   },
-  productName: { fontSize: 16, fontWeight: "bold", color: "#1F2937" },
+  productInfo: {
+    padding: 12,
+  },
+  productName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#1F2937",
+  },
   productDescription: {
     fontSize: 12,
     color: "#6B7280",
@@ -180,12 +237,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 12,
   },
-  productPrice: { fontSize: 16, fontWeight: "bold", color: "#16A34A" },
+  productPrice: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#16A34A",
+  },
   addButton: {
     backgroundColor: "#3B82F6",
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
   },
-  addButtonText: { color: "#FFFFFF", fontSize: 12, fontWeight: "500" },
+  addButtonText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "500",
+  },
 });
