@@ -16,7 +16,7 @@ interface MenuScreenProps {
   products: any[];
   cart: any[];
   activeCategory: string;
-  onCategoryChange: (cat: string) => void;
+  onCategoryChange: (categpry: any) => void;
   onAddToCart: (product: any) => void;
   onGoToCart: () => void;
   onGoToAdmin: () => void;
@@ -31,14 +31,13 @@ export default function MenuScreen({
   onGoToCart,
   onGoToAdmin,
 }: MenuScreenProps) {
-  const insets = useSafeAreaInsets(); // 👈 Obtenha os insets
+  const insets = useSafeAreaInsets();
 
   return (
-    // 👇 Use View em vez de SafeAreaView
+ 
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header com título e botões de navegação */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Ifood</Text>
+        <Text style={styles.headerTitle}> BayerEats </Text>
         <View style={styles.navButtons}>
           <TouchableOpacity onPress={onGoToAdmin} style={styles.adminButton}>
             <Text style={styles.adminButtonText}>Admin</Text>
@@ -129,8 +128,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingBottom: 12,
-    backgroundColor: "#FFFFFF",
+    paddingBottom: 8,
+    backgroundColor: "#734d1cff",
     borderBottomWidth: 1,
     borderBottomColor: "#E5E7EB",
   },
@@ -138,21 +137,21 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#1F2937",
+    color: "#ffffffff",
   },
   navButtons: {
     flexDirection: "row",
     alignItems: "center",
   },
   adminButton: {
-    backgroundColor: "#E5E7EB",
+    backgroundColor: "#e6ddb1ff",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
   },
   adminButtonText: {
     fontSize: 14,
-    color: "#374151",
+    color: "#222",
     fontWeight: "500",
   },
   cartButton: {
