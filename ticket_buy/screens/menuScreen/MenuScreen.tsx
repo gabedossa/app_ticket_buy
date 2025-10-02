@@ -123,20 +123,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F9FAFB",
-    // paddingTop será aplicado inline
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
-    // paddingTop removido daqui
     paddingBottom: 12,
     backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
     borderBottomColor: "#E5E7EB",
   },
-  // ... restante dos estilos permanece igual
+
   headerTitle: {
     fontSize: 22,
     fontWeight: "bold",
@@ -184,12 +182,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   categoriesContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 16
+    ,
     paddingVertical: 12,
   },
   categoryChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: "#E5E7EB",
     marginRight: 10,
@@ -200,13 +197,14 @@ const styles = StyleSheet.create({
   categoryChipText: {
     color: "#374151",
     fontWeight: "500",
+    fontSize: 16,
+    margin:8,
   },
   categoryChipTextActive: {
     color: "#FFFFFF",
   },
   productsContainer: {
     paddingHorizontal: 8,
-    // paddingBottom removido daqui
   },
   productCard: {
     flex: 1,

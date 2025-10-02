@@ -1,13 +1,12 @@
 // app/screens/CartScreen.tsx
 import React from "react";
 import {
-    FlatList,
-    Image,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 
 interface CartScreenProps {
@@ -28,7 +27,7 @@ export default function CartScreen({
   getTotal,
 }: CartScreenProps) {
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack}>
           <Text style={styles.headerBack}>← Voltar</Text>
@@ -104,7 +103,7 @@ export default function CartScreen({
           </View>
         </>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
