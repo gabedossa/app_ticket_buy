@@ -1,7 +1,7 @@
 // app/screens/MainApp.tsx
 import React, { useState } from "react";
 import { Productos as productsMock } from "../../app/mocks/data/dataMock";
-import { CartItem, Order, Product } from "../../app/mocks/types/types";
+import { CartItem, Order, Product } from "../../app/mocks/types/types.js";
 import AdminScreen from "../AdminScreen/adminScreen";
 import CartScreen from "../CartScreen/CartScreen";
 import MenuScreen from "../menuScreen/MenuScreen";

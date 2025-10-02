@@ -4,13 +4,13 @@ import React from "react";
 import {
   FlatList,
   Image,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from 'react-native-safe-area-context'; // 👈 Importe
 
 interface MenuScreenProps {
   products: any[];
@@ -31,8 +31,11 @@ export default function MenuScreen({
   onGoToCart,
   onGoToAdmin,
 }: MenuScreenProps) {
+  const insets = useSafeAreaInsets(); // 👈 Obtenha os insets
+
   return (
-    <SafeAreaView style={styles.container}>
+    // 👇 Use View em vez de SafeAreaView
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header com título e botões de navegação */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Ifood</Text>
@@ -85,7 +88,6 @@ export default function MenuScreen({
         data={products.filter((p) => p.category === activeCategory)}
         keyExtractor={(item) => item.id}
         numColumns={2}
-        contentContainerStyle={styles.productsContainer}
         renderItem={({ item }) => (
           <View style={styles.productCard}>
             <Image source={{ uri: item.image }} style={styles.productImage} />
@@ -108,8 +110,12 @@ export default function MenuScreen({
             </View>
           </View>
         )}
+        contentContainerStyle={[
+          styles.productsContainer,
+          { paddingBottom: insets.bottom + 16 }
+        ]}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -117,18 +123,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F9FAFB",
+    // paddingTop será aplicado inline
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingTop: 16,
+    // paddingTop removido daqui
     paddingBottom: 12,
     backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
     borderBottomColor: "#E5E7EB",
   },
+  // ... restante dos estilos permanece igual
   headerTitle: {
     fontSize: 22,
     fontWeight: "bold",
@@ -156,7 +164,7 @@ const styles = StyleSheet.create({
   },
   cartIcon: {
     fontSize: 26,
-    color: "#1F2937", // Cor explícita para garantir visibilidade
+    color: "#1F2937", 
   },
   cartBadge: {
     position: "absolute",
@@ -198,7 +206,7 @@ const styles = StyleSheet.create({
   },
   productsContainer: {
     paddingHorizontal: 8,
-    paddingBottom: 16,
+    // paddingBottom removido daqui
   },
   productCard: {
     flex: 1,

@@ -9,7 +9,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Slot /> {/* 👈 Isso renderiza app/index.tsx */}
+      <Slot /> 
       <StatusBar style="auto" />
     </ThemeProvider>
   );
