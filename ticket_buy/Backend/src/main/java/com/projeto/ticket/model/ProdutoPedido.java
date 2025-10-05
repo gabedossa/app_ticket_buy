@@ -1,5 +1,4 @@
 package com.projeto.ticket.model;
-package com.seuapp.ecommerce.model;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
