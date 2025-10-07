@@ -1,14 +1,21 @@
-// app/screens/MainApp.tsx
-import React, { useState } from "react";
-import { Productos as productsMock } from "../../app/mocks/data/dataMock";
+import React, { useEffect, useState } from "react";
 import { CartItem, Order, Product } from "../../app/mocks/types/types.js";
 import AdminScreen from "../AdminScreen/adminScreen";
 import CartScreen from "../CartScreen/CartScreen";
+import { useProdutos } from "../hooks/ProductHook";
 import MenuScreen from "../menuScreen/MenuScreen";
 import ProductFormScreen from "../ProductScreen/ProductForm";
 
 export default function MainApp() {
-  const [products, setProducts] = useState<Product[]>(productsMock);
+  const produtos = useProdutos();
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    if (Array.isArray(produtos)) {
+      setProducts(produtos);
+    }
+  }, [produtos]);
+
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [currentView, setCurrentView] = useState<
@@ -74,6 +81,12 @@ export default function MainApp() {
   };
 
   const saveProduct = () => {
+    // Validação básica
+    if (!newProduct.name.trim() || newProduct.price <= 0) {
+      alert("Nome e preço são obrigatórios e o preço deve ser maior que zero!");
+      return;
+    }
+
     if (editingProduct) {
       setProducts((prev) =>
         prev.map((p) =>
@@ -84,7 +97,10 @@ export default function MainApp() {
       );
       alert("Produto atualizado!");
     } else {
-      const productToAdd: Product = { ...newProduct, id: `prod-${Date.now()}` };
+      const productToAdd: Product = { 
+        ...newProduct, 
+        id: `prod-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      };
       setProducts((prev) => [productToAdd, ...prev]);
       alert("Novo produto adicionado!");
     }
@@ -100,15 +116,40 @@ export default function MainApp() {
   };
 
   const deleteProduct = (id: string) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+    if (window.confirm("Tem certeza que deseja excluir este produto?")) {
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+      // Remove também do carrinho se estiver presente
+      setCart((prev) => prev.filter((item) => item.product.id !== id));
+    }
   };
 
-  const updateOrderStatus = (orderId: string, status: string) => {
+  const updateOrderStatus = (orderId: string, status: Order["status"]) => {
     setOrders((prev) =>
       prev.map((order) =>
-        order.id === orderId ? { ...order, status: status as Order["status"] } : order
+        order.id === orderId ? { ...order, status } : order
       )
     );
+  };
+
+  // Função para lidar com mudanças no formulário de produto
+  const handleProductChange = (field: keyof Omit<Product, "id">, value: string | number) => {
+    setNewProduct((prev) => ({ 
+      ...prev, 
+      [field]: field === "price" ? Number(value) : value 
+    }));
+  };
+
+  // Reset do formulário ao voltar para admin
+  const handleBackToAdmin = () => {
+    setEditingProduct(null);
+    setNewProduct({
+      name: "",
+      price: 0,
+      description: "",
+      image: "",
+      category: "lanches",
+    });
+    setCurrentView("admin");
   };
 
   switch (currentView) {
@@ -142,7 +183,13 @@ export default function MainApp() {
           }}
           onEditProduct={(product) => {
             setEditingProduct(product);
-            setNewProduct(product);
+            setNewProduct({
+              name: product.name,
+              price: product.price,
+              description: product.description,
+              image: product.image,
+              category: product.category,
+            });
             setCurrentView("productForm");
           }}
           onDeleteProduct={deleteProduct}
@@ -154,11 +201,9 @@ export default function MainApp() {
         <ProductFormScreen
           product={newProduct}
           isEditing={!!editingProduct}
-          onBack={() => setCurrentView("admin")}
+          onBack={handleBackToAdmin}
           onSave={saveProduct}
-          onChange={(field:any, value:any) =>
-            setNewProduct((prev) => ({ ...prev, [field]: value }))
-          }
+          onChange={handleProductChange}
         />
       );
     default:
