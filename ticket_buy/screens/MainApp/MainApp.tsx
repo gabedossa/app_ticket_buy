@@ -156,7 +156,7 @@ export default function MainApp() {
           isEditing={!!editingProduct}
           onBack={() => setCurrentView("admin")}
           onSave={saveProduct}
-          onChange={(field, value) =>
+          onChange={(field:any, value:any) =>
             setNewProduct((prev) => ({ ...prev, [field]: value }))
           }
         />
