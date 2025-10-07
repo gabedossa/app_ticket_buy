@@ -10,6 +10,7 @@ import java.util.List;
 public class Pedido {
     @Id
     @Column(name = "id_pedido")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer idPedido;
 
     @Column(name = "preco_total")

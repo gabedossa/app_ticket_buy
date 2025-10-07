@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 public class ImagemProduto {
     @Id
     @Column(name = "id_imagem_produto")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer idImagemProduto;
 
     @Column(name = "url_imagem")

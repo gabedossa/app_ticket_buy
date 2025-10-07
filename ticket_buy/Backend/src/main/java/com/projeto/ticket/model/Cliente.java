@@ -9,6 +9,7 @@ import java.util.List;
 public class Cliente {
     @Id
     @Column(name = "id_cliente")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer idCliente;
 
     private String nome;
