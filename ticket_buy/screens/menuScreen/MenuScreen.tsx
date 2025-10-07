@@ -37,7 +37,10 @@ export default function MenuScreen({
  
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}> BayerEats </Text>
+        <View style={styles.logoCountainer}>
+        <Image source={require("../../assets/images/LogoBayerEats.png")} style={styles.logoTitle}/>
+        <Text style={styles.headerTitle}> BayerFoods </Text>
+        </View>
         <View style={styles.navButtons}>
           <TouchableOpacity onPress={onGoToAdmin} style={styles.adminButton}>
             <Text style={styles.adminButtonText}>Admin</Text>
@@ -123,35 +126,46 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F9FAFB",
   },
+  logoTitle:{
+    width:45,
+    height:30,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#ffffffff",
+    marginLeft: -25,
+  },
+  logoCountainer:{
+    flexDirection:"row",
+    justifyContent:"center",
+    alignItems: "center",
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
     paddingBottom: 8,
-    backgroundColor: "#734d1cff",
+    backgroundColor: "#da8210ff",
     borderBottomWidth: 1,
     borderBottomColor: "#E5E7EB",
   },
 
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#ffffffff",
-  },
+  
   navButtons: {
     flexDirection: "row",
     alignItems: "center",
   },
   adminButton: {
-    backgroundColor: "#e6ddb1ff",
+    backgroundColor: "#a54501ff",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
   },
   adminButtonText: {
     fontSize: 14,
-    color: "#222",
+    color: "#FFF",
     fontWeight: "500",
   },
   cartButton: {
@@ -187,14 +201,17 @@ const styles = StyleSheet.create({
   },
   categoryChip: {
     borderRadius: 20,
-    backgroundColor: "#E5E7EB",
+    height:40,
+    backgroundColor: "#ea8603ff",
     marginRight: 10,
+    paddingRight:5,
+    paddingLeft:5,
   },
   categoryChipActive: {
-    backgroundColor: "#3B82F6",
+    backgroundColor: "#d16003ff",
   },
   categoryChipText: {
-    color: "#374151",
+    color: "#FFF",
     fontWeight: "500",
     fontSize: 16,
     margin:8,
