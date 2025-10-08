@@ -1,8 +1,8 @@
 // Tipos
 type Product = {
   id: string;
-  name: string;
-  price: number;
+  nome: string;
+  preco: number;
   description: string;
   image: string;
   category: 'lanches' | 'bebidas' | 'sobremesas';

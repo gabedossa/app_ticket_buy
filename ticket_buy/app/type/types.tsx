@@ -1,5 +1,7 @@
 // Tipos
 export type Product = {
+  preco: number;
+  nome: string;
   id: string;
   name: string;
   price: number;

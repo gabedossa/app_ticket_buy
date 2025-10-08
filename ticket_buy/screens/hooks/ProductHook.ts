@@ -1,6 +1,9 @@
-import { Product, UseProdutosReturn } from '@/app/type/types'; /**Importando os tipos de dados */
-import { useEffect, useState } from 'react';
-import { ServiceProdutos } from '../../app/service/api/ProdutoService';
+import {
+  Product,
+  UseProdutosReturn,
+} from "@/app/type/types"; /**Importando os tipos de dados */
+import { useEffect, useState } from "react";
+import { ServiceProdutos } from "../../app/service/api/ProdutoService";
 
 export const useProdutos = (): UseProdutosReturn => {
   const [produtos, setProdutos] = useState<Product[]>([]);
@@ -12,7 +15,8 @@ export const useProdutos = (): UseProdutosReturn => {
       try {
         setLoading(true);
         const data = await ServiceProdutos.getProdutos();
-        console.log('Dado vindos do backend');
+        // Depois
+        console.log("Dados vindos do backend:", data); 
         setProdutos(data);
         setError(null);
       } catch (err) {

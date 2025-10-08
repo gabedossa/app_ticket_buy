@@ -1,12 +1,5 @@
 import { Product } from "@/app/type/types";
-import axios from "axios";
-
-const api = axios.create({
-  baseURL: 'http://localhost:8080/api',
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+import { api } from "../api";
 
 export const ServiceProdutos = {
   // GET ALL PRODUCTS

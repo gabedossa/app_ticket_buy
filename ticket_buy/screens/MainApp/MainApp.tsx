@@ -1,24 +1,16 @@
-// Local: app/components/MainApp.tsx
+// Localização: screens/MainApp/MainApp.tsx
 
+import { CardItem } from '@/components/itemCard/CardItem';
 import React from 'react';
-import { ActivityIndicator, FlatList, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
 import { useProdutos } from '../hooks/ProductHook';
-import { StylesMain as Styles } from './StyleMain';
 
 export const MainApp = () => {
   const { produtos, loading, error } = useProdutos();
 
-  // Log para ver o estado atual em cada renderização
-  console.log('--- NOVO RENDER ---');
-  console.log('Carregando:', loading);
-  console.log('Erro:', error ? error.message : null);
-  console.log('Produtos:', produtos);
-  console.log('--------------------');
-
   if (loading) {
-    console.log("Renderizando: Carregamento");
     return (
-      <View style={[Styles.container, Styles.center]}>
+      <View style={[styles.container, styles.center]}>
         <ActivityIndicator size="large" color="#0000ff" />
         <Text>Carregando produtos...</Text>
       </View>
@@ -26,33 +18,51 @@ export const MainApp = () => {
   }
 
   if (error) {
-    console.log("Renderizando: Erro");
     return (
-      <View style={[Styles.container, Styles.center]}>
-        <Text style={Styles.errorText}>Ocorreu um erro ao buscar os produtos.</Text>
-        <Text style={Styles.errorText}>{error.message}</Text>
+      <View style={[styles.container, styles.center]}>
+        <Text style={styles.errorText}>Ocorreu um erro ao buscar os produtos.</Text>
+        <Text style={styles.errorText}>{error.message}</Text>
       </View>
     );
   }
 
-  console.log("Renderizando: Sucesso (FlatList)");
   return (
-    <View style={Styles.container}>
-      <Text style={Styles.title}>Lista de Produtos</Text>
-      <FlatList
+    <FlatList style={styles.container}
         data={produtos}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={Styles.productItem}>
-            <Text style={Styles.productName}>{item.nome}</Text>
-          </View>
+          <CardItem 
+            name={item.nome} 
+            price={item.preco}
+          />
         )}
         ListEmptyComponent={() => (
-          <View style={Styles.emptyContainer}>
-            <Text style={Styles.emptyText}>Nenhum produto encontrado.</Text>
+          <View style={styles.center}>
+            <Text>Nenhum produto encontrado.</Text>
           </View>
         )}
       />
-    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    margin: 16,
+    textAlign: 'center',
+  },
+  errorText: {
+    color: 'red',
+  },
+});
