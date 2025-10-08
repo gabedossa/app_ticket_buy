@@ -1,11 +1,8 @@
 import { Product } from "@/app/type/types";
 import axios from "axios";
 
-// Criando conexão com axios
-const API_BASE_URL = "http://192.168.1.10:8080/api";
-
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: 'http://localhost:8080/api',
   headers: {
     "Content-Type": "application/json",
   },

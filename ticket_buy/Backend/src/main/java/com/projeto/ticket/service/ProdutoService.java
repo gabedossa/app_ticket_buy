@@ -15,7 +15,7 @@ public class ProdutoService {
     private ProdutoRepository produtoRepository;
 
     public List<Produto> buscarTodos() {
-        return produtoRepository.findAll();
+        return produtoRepository.findAllComImagens();
     }
 
     public Produto buscarPorId(Integer id) {

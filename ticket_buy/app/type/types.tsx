@@ -8,6 +8,13 @@ export type Product = {
   category: "lanches" | "bebidas" | "sobremesas";
 };
 
+export type UseProdutosReturn = {
+  produtos: Product[];
+  loading: boolean;
+  error: Error | null;
+  setProdutos: React.Dispatch<React.SetStateAction<Product[]>>;
+};
+
 export type CartItem = {
   product: Product;
   quantity: number;
