@@ -1,23 +1,14 @@
-// app/_layout.tsx
+import { Stack } from 'expo-router';
+import { CartProvider } from '../app/context/CartContext';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router'; // 1. Importe o Stack
-import { StatusBar } from 'expo-status-bar';
-
-// 2. Use 'export default' para o layout principal
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <CartProvider>
       <Stack>
-        <Stack.Screen 
-          name="index" 
-          options={{ headerShown: false }} 
-        />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="modalProduct" options={{ presentation: 'modal', title: 'Detalhes do Produto' }} />
+        <Stack.Screen name="modalCheckout" options={{ presentation: 'modal', title: 'Pedido Enviado!' }} />
       </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    </CartProvider>
   );
 }
