@@ -2,9 +2,9 @@ import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 // Hook para receber os parâmetros
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Colors } from './constants/Colors';
-import { useCart } from './context/CartContext';
-import { Product } from './src/api/types';
+import { Colors } from './src/constants/Colors';
+import { useCart } from './src/context/CartContext';
+import { Product } from './src/types/index';
 
 export default function ModalProductScreen() {
   const params = useLocalSearchParams();

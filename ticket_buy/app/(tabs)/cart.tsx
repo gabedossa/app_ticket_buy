@@ -1,9 +1,9 @@
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import CartListItem from '../component/cartListItem';
-import { Colors } from '../constants/Colors';
-import { useCart } from '../context/CartContext';
+import CartListItem from '../src/component/cartListItem';
+import { Colors } from '../src/constants/Colors';
+import { useCart } from '../src/context/CartContext';
 
 export default function CartScreen() {
   const { items, total } = useCart();

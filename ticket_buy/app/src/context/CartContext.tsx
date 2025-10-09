@@ -1,5 +1,8 @@
 import React, { createContext, PropsWithChildren, useContext, useMemo, useState } from 'react';
-import { CartItem, Product } from '../types';
+import { Product } from '../api/service';
+export interface CartItem extends Product {
+  quantity: number;
+}
 
 interface ICartContext {
   items: CartItem[];

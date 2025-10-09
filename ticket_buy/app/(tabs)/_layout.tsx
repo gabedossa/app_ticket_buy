@@ -1,8 +1,8 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 
-import { Colors } from '../constants/Colors';
-import { useCart } from '../context/CartContext';
+import { Colors } from '../src/constants/Colors';
+import { useCart } from '../src/context/CartContext';
 
 export default function TabsLayout() {
   const { itemCount } = useCart();
