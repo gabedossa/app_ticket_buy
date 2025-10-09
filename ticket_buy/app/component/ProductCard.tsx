@@ -13,8 +13,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
   const openProductDetails = () => {
     router.push({
-      pathname: '/modalProduct',
-      params: { 
+      pathname: '/ModalProduct', 
+      params: {
         id: product.id,
         name: product.name,
         price: product.price,
@@ -43,26 +43,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#ddd',
-    // Sombra para iOS
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    // Sombra para Android
     elevation: 3,
   },
   image: {
     width: '100%',
     height: 100,
     borderRadius: 8,
-    resizeMode: 'cover',
   },
   name: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.textDark,
     marginTop: 8,
-    textAlign: 'center',
   },
   price: {
     fontSize: 16,
