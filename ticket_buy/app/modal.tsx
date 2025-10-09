@@ -1,8 +1,8 @@
 import { Link } from 'expo-router';
 import { StyleSheet } from 'react-native';
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { ThemedText } from '@/screens/components/themed-text';
+import { ThemedView } from '@/screens/components/themed-view';
 
 export default function ModalScreen() {
   return (

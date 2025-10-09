@@ -1,103 +1,60 @@
-// app/screens/CartScreen.tsx
-import React from "react";
-import {
-  FlatList,
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
-} from "react-native";
+import React from 'react';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-interface CartScreenProps {
-  cart: any[];
-  onBack: () => void;
-  onRemove: (id: string) => void;
-  onUpdateQuantity: (id: string, qty: number) => void;
-  onCheckout: () => void;
-  getTotal: () => number;
-}
+const CartScreen = ({ cart: any, onUpdateCart: any, onCheckout : any }) => {
+  const updateQuantity = (productId, change) => {
+    const updatedCart = cart.map(item => 
+      item.id === productId 
+        ? { ...item, quantity: Math.max(0, item.quantity + change) }
+        : item
+    ).filter(item => item.quantity > 0);
+    
+    onUpdateCart(updatedCart);
+  };
 
-export default function CartScreen({
-  cart,
-  onBack,
-  onRemove,
-  onUpdateQuantity,
-  onCheckout,
-  getTotal,
-}: CartScreenProps) {
+  const getTotal = () => {
+    return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onBack}>
-          <Text style={styles.headerBack}>← Voltar</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Carrinho</Text>
-        <View style={{ width: 50 }} />
-      </View>
-
+      <Text style={styles.title}>Carrinho</Text>
+      
       {cart.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Seu carrinho está vazio</Text>
-        </View>
+        <Text>Seu carrinho está vazio.</Text>
       ) : (
         <>
           <FlatList
             data={cart}
-            keyExtractor={(item) => item.product.id}
             renderItem={({ item }) => (
-              <View style={styles.card}>
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <Image
-                    source={{ uri: item.product.image }}
-                    style={styles.cartItemImage}
-                  />
-                  <View style={{ flex: 1, marginLeft: 12 }}>
-                    <Text style={styles.productName}>{item.product.name}</Text>
-                    <Text style={styles.productPrice}>
-                      R$ {item.product.price.toFixed(2)}
-                    </Text>
-                  </View>
-                  <View style={styles.quantityContainer}>
-                    <TouchableOpacity
-                      onPress={() =>
-                        onUpdateQuantity(item.product.id, item.quantity - 1)
-                      }
-                      style={styles.quantityButton}
-                    >
-                      <Text>-</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.quantityText}>{item.quantity}</Text>
-                    <TouchableOpacity
-                      onPress={() =>
-                        onUpdateQuantity(item.product.id, item.quantity + 1)
-                      }
-                      style={styles.quantityButton}
-                    >
-                      <Text>+</Text>
-                    </TouchableOpacity>
-                  </View>
+              <View style={styles.cartItem}>
+                <View style={styles.itemInfo}>
+                  <Text style={styles.itemName}>{item.name}</Text>
+                  <Text>R$ {item.price.toFixed(2)}</Text>
+                </View>
+                <View style={styles.quantityControls}>
+                  <TouchableOpacity 
+                    style={styles.quantityButton}
+                    onPress={() => updateQuantity(item.id, -1)}
+                  >
+                    <Text>-</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.quantity}>{item.quantity}</Text>
+                  <TouchableOpacity 
+                    style={styles.quantityButton}
+                    onPress={() => updateQuantity(item.id, 1)}
+                  >
+                    <Text>+</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
-            contentContainerStyle={{ padding: 16 }}
+            keyExtractor={item => item.id.toString()}
           />
-
-          <View style={styles.totalContainer}>
-            <View style={[styles.card, { padding: 16 }]}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Text style={styles.totalLabel}>Total:</Text>
-                <Text style={styles.totalValue}>
-                  R$ {getTotal().toFixed(2)}
-                </Text>
-              </View>
-            </View>
-            <TouchableOpacity onPress={onCheckout} style={styles.checkoutButton}>
+          
+          <View style={styles.footer}>
+            <Text style={styles.total}>Total: R$ {getTotal().toFixed(2)}</Text>
+            <TouchableOpacity style={styles.checkoutButton} onPress={onCheckout}>
               <Text style={styles.checkoutButtonText}>Finalizar Pedido</Text>
             </TouchableOpacity>
           </View>
@@ -105,60 +62,69 @@ export default function CartScreen({
       )}
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB" },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingBottom: 16,
-    paddingHorizontal: 16,
-    backgroundColor: "#FFF",
+  container: {
+    flex: 1,
+    padding: 16
   },
-  headerBack: { color: "#3B82F6", fontSize: 16, fontWeight: "500", width: 50 },
-  headerTitle: { fontSize: 22, fontWeight: "bold", color: "#1F2937" },
-  emptyContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  emptyText: { color: "#6B7280", fontSize: 16 },
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    marginBottom: 12,
-    padding: 12,
-    elevation: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16
   },
-  cartItemImage: { width: 64, height: 64, borderRadius: 8 },
-  productName: { fontSize: 16, fontWeight: "500", color: "#111827" },
-  productPrice: { color: "#6B7280", fontSize: 16, marginTop: 4 },
-  quantityContainer: { flexDirection: "row", alignItems: "center" },
+  cartItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee'
+  },
+  itemInfo: {
+    flex: 1
+  },
+  itemName: {
+    fontWeight: 'bold',
+    fontSize: 16
+  },
+  quantityControls: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
   quantityButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#E5E7EB",
-    justifyContent: "center",
-    alignItems: "center",
+    padding: 8,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 4
   },
-  quantityText: { marginHorizontal: 12, fontSize: 16, fontWeight: "500" },
-  totalContainer: {
-    padding: 16,
+  quantity: {
+    marginHorizontal: 12,
+    fontSize: 16
+  },
+  footer: {
+    marginTop: 20,
+    paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
-    backgroundColor: "#F9FAFB",
+    borderTopColor: '#eee'
   },
-  totalLabel: { fontSize: 18, fontWeight: "bold" },
-  totalValue: { fontSize: 18, fontWeight: "bold" },
+  total: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'right',
+    marginBottom: 16
+  },
   checkoutButton: {
-    backgroundColor: "#16A34A",
+    backgroundColor: '#2ecc71',
     padding: 16,
     borderRadius: 8,
-    alignItems: "center",
-    marginTop: 12,
+    alignItems: 'center'
   },
-  checkoutButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "bold" },
+  checkoutButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16
+  }
 });
+
+export default CartScreen;
