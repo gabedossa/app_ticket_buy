@@ -1,6 +1,6 @@
-// app/index.tsx
-import React from 'react';
+import { Redirect } from 'expo-router';
+const Index = () => {
+  return <Redirect href="/menu" />;
+};
 
-export default function HomeScreen() {
-  return <Text>teste</Text>;
-}
+export default Index;

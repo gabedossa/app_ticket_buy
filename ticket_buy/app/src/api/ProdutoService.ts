@@ -1,5 +1,6 @@
-import { Product } from "@/app/type/types";
-import { api } from ".";
+import { Product } from "../../src/api/types";
+import { api } from "../../types/index";
+
 
 export const ServiceProdutos = {
   // GET ALL PRODUCTS
