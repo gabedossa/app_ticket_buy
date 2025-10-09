@@ -1,5 +1,5 @@
 import React, { createContext, PropsWithChildren, useContext, useMemo, useState } from 'react';
-import { Product } from '../api/service';
+import { Product } from '../types';
 export interface CartItem extends Product {
   quantity: number;
 }
@@ -51,7 +51,7 @@ export const CartProvider = ({ children }: PropsWithChildren) => {
 
   const clearCart = () => setItems([]);
   
-  const total = useMemo(() => items.reduce((sum, item) => sum + item.price * item.quantity, 0), [items]);
+  const total = useMemo(() => items.reduce((sum, item) => sum + item.preco * item.quantity, 0), [items]);
   const itemCount = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
 
   return (

@@ -1,21 +1,25 @@
+// app/_layout.tsx
 import { Stack } from 'expo-router';
+import React from 'react';
 import { CartProvider } from './src/context/CartContext';
+import { OrdersProvider } from './src/context/OrderContext';
+import { ProductsProvider } from './src/context/ProductContext';
 
 export default function RootLayout() {
   return (
-    <CartProvider>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen 
-          name="modalProduct" 
-          options={{ presentation: 'modal', title: 'Detalhes do Produto' }} 
-        />
-        
-        <Stack.Screen 
-          name="modalCheckout" 
-          options={{ presentation: 'modal', title: 'Pedido Enviado!' }} 
-        />
-      </Stack>
-    </CartProvider>
+    <ProductsProvider>
+      <CartProvider>
+        <OrdersProvider>
+          <Stack>
+            <Stack.Screen 
+              name="(tabs)" 
+              options={{ 
+                headerShown: false 
+              }} 
+            />
+          </Stack>
+        </OrdersProvider>
+      </CartProvider>
+    </ProductsProvider>
   );
 }
