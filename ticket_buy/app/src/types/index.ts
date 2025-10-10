@@ -10,6 +10,12 @@ export interface CartItem {
 }
 
 export interface Product {
+  tipo: string;
+  imagens: boolean;
+  nome: any;
+  home: any;
+  preco: any;
+  idProduto: any;
   id: string | number;
   name: string;
   price: number;
