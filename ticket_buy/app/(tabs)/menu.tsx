@@ -1,6 +1,6 @@
 // Menu.jsx ou seu componente principal
 import React, { useEffect, useState } from 'react';
-import { productService } from '../src/service/ProductService';
+import { ProductService } from '../src/service/ProductService';
 
 type Product = {
   idProduto: number;
@@ -19,7 +19,7 @@ const Menu = () => {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const productsData = await productService.getProducts();
+      const productsData = await ProductService.getProducts();
       console.log('Produtos recebidos:', productsData);
       setProducts(productsData);
     } catch (error) {
