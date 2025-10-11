@@ -1,4 +1,4 @@
-// app/(tabs)/cart.tsx
+import { useRouter } from "expo-router"; // 1. ADICIONADO: Importar o hook de navegação
 import React, { useState } from "react";
 import {
   Alert,
@@ -11,7 +11,8 @@ import {
   View,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
-import Layout from "../src/component/layout"; // Assumindo que você ainda usa Layout
+import Svg from "react-native-svg";
+import Layout from "../src/component/layout";
 import { useCart } from "../src/context/CartContext";
 import { useOrders } from "../src/context/OrderContext";
 import { CartItem } from "../src/types";
@@ -28,6 +29,7 @@ const CartScreen = () => {
   const { createOrder } = useOrders();
 
   const [isModalVisible, setModalVisible] = useState(false);
+  const router = useRouter(); // 2. ADICIONADO: Inicializar o router
 
   const handleCheckout = async () => {
     try {
@@ -41,6 +43,7 @@ const CartScreen = () => {
   const handleCloseModal = () => {
     setModalVisible(false);
     clearCart();
+    router.navigate("/(tabs)/menu");
   };
 
   const handleRemoveItem = (productId: string | number) => {
@@ -57,27 +60,44 @@ const CartScreen = () => {
   if (itemCount === 0) {
     return (
       <Layout>
-               {" "}
         <View style={styles.emptyContainer}>
-                   {" "}
-          <Text style={styles.emptyText}>Seu carrinho está vazio</Text>       {" "}
+          <Text style={styles.emptyText}>Seu carrinho está vazio</Text>
         </View>
-             {" "}
       </Layout>
     );
   }
 
   return (
     <Layout>
-           {" "}
+      <View style={styles.header}>
+        <View style={styles.headerTitleContainer}>
+          <Svg height="24" width="24"></Svg>
+          <Text style={styles.headerTitle}>Ticketeria</Text>
+        </View>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/admin")}>
+          <View style={styles.admBtn}>
+            <Text style={styles.admText}>Adm</Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => router.push("/(tabs)/cart")}
+          style={styles.cartButton}
+        >
+          <View style={styles.counterBack}>
+            <Text style={styles.serverStatus}>
+              {itemCount > 0 ? `${itemCount}` : `0`}
+            </Text>
+          </View>
+          <Text style={styles.carrinhoText}>Carrinho</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.container}>
-               {" "}
         <FlatList
           data={items}
           keyExtractor={(item: CartItem) => item.id.toString()}
           renderItem={({ item }: { item: CartItem }) => (
             <View style={styles.cartItem}>
-              {/* Imagem do Produto (Opcional, adicionei para um layout mais completo) */}
               <Image
                 source={{
                   uri:
@@ -87,78 +107,55 @@ const CartScreen = () => {
                 }}
                 style={styles.itemImage}
               />
-                           {" "}
               <View style={styles.itemInfo}>
-                                <Text style={styles.itemName}>{item.name}</Text>
-                               {" "}
+                <Text style={styles.itemName}>{item.name}</Text>
                 <Text style={styles.itemPrice}>R$ {item.price.toFixed(2)}</Text>
-                             {" "}
               </View>
-                           {" "}
               <View style={styles.quantityControls}>
-                               {" "}
                 <TouchableOpacity
                   style={styles.quantityButton}
                   onPress={() =>
                     handleUpdateQuantity(item.id, item.quantity - 1)
                   }
                 >
-                                   {" "}
-                  <Text style={styles.quantityButtonText}>-</Text>             
-                   {" "}
+                  <Text style={styles.quantityButtonText}>-</Text>
                 </TouchableOpacity>
-                               {" "}
-                <Text style={styles.quantityText}>{item.quantity}</Text>       
-                       {" "}
+                <Text style={styles.quantityText}>{item.quantity}</Text>
                 <TouchableOpacity
                   style={styles.quantityButton}
                   onPress={() =>
                     handleUpdateQuantity(item.id, item.quantity + 1)
                   }
                 >
-                                   {" "}
-                  <Text style={styles.quantityButtonText}>+</Text>             
-                   {" "}
+                  <Text style={styles.quantityButtonText}>+</Text>
                 </TouchableOpacity>
-                               {" "}
                 <TouchableOpacity
                   style={styles.removeButton}
                   onPress={() => handleRemoveItem(item.id)}
                 >
-                                   {" "}
-                  <Text style={styles.removeButtonText}>×</Text>               {" "}
+                  <Text style={styles.removeButtonText}>×</Text>
                 </TouchableOpacity>
-                             {" "}
               </View>
-                           {" "}
               <Text style={styles.itemTotal}>
-                                R$ {(item.price * item.quantity).toFixed(2)}   
-                         {" "}
+                R$ {(item.price * item.quantity).toFixed(2)}
               </Text>
-                         {" "}
             </View>
           )}
         />
-                       {" "}
+
         <View style={styles.footer}>
-                   {" "}
           <View style={styles.totalContainer}>
-                       {" "}
-            <Text style={styles.totalText}>Total: R$ {total.toFixed(2)}</Text> 
-                      <Text style={styles.itemsCount}>{itemCount} itens</Text> 
-                   {" "}
+            <Text style={styles.totalText}>Total: R$ {total.toFixed(2)}</Text>
+            <Text style={styles.itemsCount}>{itemCount} itens</Text>
           </View>
-                   {" "}
           <TouchableOpacity
             style={styles.checkoutButton}
             onPress={handleCheckout}
           >
-                       {" "}
-            <Text style={styles.checkoutButtonText}>Finalizar Pedido</Text>     
-               {" "}
+            <Text style={styles.checkoutButtonText}>Finalizar Pedido</Text>
           </TouchableOpacity>
-                 {" "}
         </View>
+
         <Modal
           visible={isModalVisible}
           transparent={true}
@@ -193,22 +190,45 @@ const CartScreen = () => {
             </View>
           </View>
         </Modal>
-             {" "}
       </View>
-         {" "}
     </Layout>
   );
 };
 
 const styles = StyleSheet.create({
+  header: {
+    backgroundColor: "#c23b01ff",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  headerTitleContainer: { flexDirection: "row", alignItems: "center" },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "white",
+    marginLeft: 8,
+  },
+  cartButton: { width: 80, height: 40, alignItems: "center", justifyContent: "center", backgroundColor: "#913800ff", borderRadius: 16 },
+    serverStatus: { fontSize: 14, color: "#000", opacity: 0.95, fontWeight: "500" },
+  admBtn: {
+    width: 80,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#d2b302ff",
+    borderRadius: 16,
+  },
+  admText: { color: "#555" },
   container: { flex: 1, padding: 16 },
   emptyContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   emptyText: { fontSize: 18, color: "#666" },
-  // CORREÇÕES AQUI
   cartItem: {
     flexDirection: "row",
-    alignItems: "center", // Alinha os itens verticalmente no centro
-    padding: 12, // Um pouco menos de padding
+    alignItems: "center",
+    padding: 12,
     backgroundColor: "white",
     borderRadius: 8,
     marginBottom: 8,
@@ -217,28 +237,27 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
-    flexWrap: "wrap", // Permite que os itens quebrem a linha se não houver espaço
-    justifyContent: "space-between", // Distribui o espaço entre os itens
+    flexWrap: "wrap",
+    justifyContent: "space-between",
   },
   itemImage: {
-    // Adicionado estilo para a imagem (se você optar por usá-la)
     width: 60,
     height: 60,
-    borderRadius: 30, // Deixa a imagem redonda
+    borderRadius: 30,
     marginRight: 12,
-    backgroundColor: "#f0f0f0", // Cor de fundo para placeholders
+    backgroundColor: "#f0f0f0",
   },
   itemInfo: {
-    flex: 1, // Permite que o nome e preço ocupem o espaço disponível
-    marginRight: 10, // Espaçamento entre as infos do item e os controles de quantidade
+    flex: 1,
+    marginRight: 10,
   },
   itemName: { fontSize: 16, fontWeight: "600", color: "#333" },
   itemPrice: { fontSize: 14, color: "#666", marginTop: 4 },
   quantityControls: {
     flexDirection: "row",
     alignItems: "center",
-    // Removido marginHorizontal para melhor controle, use gap ou padding se necessário
   },
+   counterBack: { width: 18, height: 18, position: "absolute", top: 0, right: 0, display: "flex", justifyContent: "center", alignItems: "center", fontWeight: 700, backgroundColor: "rgba(255, 204, 0, 1)", borderRadius: 18 },
   quantityButton: {
     width: 32,
     height: 32,
@@ -248,7 +267,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   quantityButtonText: { color: "white", fontSize: 16, fontWeight: "bold" },
-  quantityText: { marginHorizontal: 10, fontSize: 16, fontWeight: "600" }, // Ajustado o margin
+  quantityText: { marginHorizontal: 10, fontSize: 16, fontWeight: "600" },
   removeButton: {
     width: 32,
     height: 32,
@@ -257,15 +276,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 10,
-  }, // Ajustado o margin
+  },
+  carrinhoText: { color: "#FFF" },
   removeButtonText: { color: "white", fontSize: 16, fontWeight: "bold" },
   itemTotal: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#2c3e50",
-    minWidth: 70, // Garante que o total tenha um espaço mínimo para não quebrar
-    textAlign: "right", // Alinha o texto à direita
-    marginLeft: 10, // Espaçamento à esquerda
+    minWidth: 70,
+    textAlign: "right",
+    marginLeft: 10,
   },
   footer: {
     borderTopWidth: 1,

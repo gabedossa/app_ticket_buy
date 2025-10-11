@@ -92,10 +92,10 @@ const Menu = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* HEADER */}
+
       <View style={styles.header}>
         <View style={styles.headerTitleContainer}>
-          <Svg height="24" width="24">{/* ... seu ícone SVG ... */}</Svg>
+          <Svg height="24" width="24"></Svg>
           <Text style={styles.headerTitle}>Ticketeria</Text>
         </View>
         <TouchableOpacity onPress={() => router.push('/(tabs)/admin')} >
@@ -103,16 +103,12 @@ const Menu = () => {
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.push('/(tabs)/cart')} style={styles.cartButton}>
           <View style={styles.counterBack}>
-            {/* --- 5. DADO GLOBAL NA UI --- */}
-            {/* O contador agora vem de 'itemCount' do contexto. */}
+
             <Text style={styles.serverStatus}>{itemCount > 0 ? `${itemCount}` : `0`}</Text>
           </View>
           <Text style={styles.carrinhoText}>Carrinho</Text>
         </TouchableOpacity>
       </View>
-
-      {/* --- 6. RENDERIZAÇÃO SIMPLIFICADA --- */}
-      {/* Removemos a lógica de 'screen === "menu"' e renderizamos sempre o menu. */}
       <>
         <View>
           <ScrollView horizontal contentContainerStyle={styles.categories}>
@@ -132,7 +128,6 @@ const Menu = () => {
         <FlatList
           data={filteredProducts}
           renderItem={renderProduct}
-          // Usando 'item.id' do nosso tipo padronizado
           keyExtractor={(item) => item.id.toString()}
           numColumns={2}
           contentContainerStyle={styles.productsGrid}
@@ -141,7 +136,6 @@ const Menu = () => {
         />
       </>
       
-      {/* MODAL */}
       <Modal visible={!!selectedProduct} transparent={true} animationType="fade" onRequestClose={() => setSelectedProduct(null)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -161,12 +155,10 @@ const Menu = () => {
         </View>
       </Modal>
 
-      {/* --- REMOVIDO: O CheckoutModal foi deletado daqui. */}
     </SafeAreaView>
   );
 };
 
-// Cole aqui o seu StyleSheet original completo da tela de Menu.
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: "#f0f2f5" },
     fullScreen: { flex: 1 },
