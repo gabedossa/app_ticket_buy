@@ -10,9 +10,11 @@ export default function RootLayout() {
     <ProductsProvider>
       <CartProvider>
         <OrdersProvider>
-          <Stack>
+          <Stack screenOptions={{
+          headerShown: false,
+        }}>
             <Stack.Screen 
-              name="(tabs)" 
+              name="(tabs)"
               options={{ 
                 headerShown: false 
               }} 

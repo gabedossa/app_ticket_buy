@@ -1,27 +1,17 @@
 // src/types/index.ts
-export interface CartItem {
-  id: string | number;
-  name: string;
-  price: number;
-  quantity: number;
-  image?: string;
-  description?: string;
-  category?: string;
-}
+import React from 'react';
 
 export interface Product {
-  tipo: string;
-  imagens: boolean;
-  nome: any;
-  home: any;
-  preco: any;
-  idProduto: any;
   id: string | number;
   name: string;
   price: number;
-  description: string;
   category: string;
-  image: string;
+  description?: string;
+  images?: string[]; 
+}
+
+export interface CartItem extends Product {
+  quantity: number;
 }
 
 export interface Order {
@@ -29,15 +19,15 @@ export interface Order {
   items: CartItem[];
   total: number;
   status: 'em preparo' | 'pronto' | 'entregue';
-  timestamp: string;
+  timestamp: string; 
 }
 
 export type OrderStatus = Order['status'];
 
 export type CartAction = 
-  | { type: 'ADD_TO_CART'; payload: CartItem }
-  | { type: 'REMOVE_FROM_CART'; payload: string | number }
-  | { type: 'UPDATE_QUANTITY'; payload: { id: string | number; quantity: number } }
+  | { type: 'ADD_TO_CART'; payload: Product } // Payload simplificado para Product
+  | { type: 'REMOVE_FROM_CART'; payload: { productId: string | number } }
+  | { type: 'UPDATE_QUANTITY'; payload: { productId: string | number; newQuantity: number } }
   | { type: 'CLEAR_CART' };
 
 export interface ProviderProps {

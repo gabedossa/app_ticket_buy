@@ -1,210 +1,345 @@
 // app/(tabs)/cart.tsx
-import React from 'react';
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Layout from '../src/component/layout';
-import { useCart } from '../src/context/CartContext';
-import { useOrders } from '../src/context/OrderContext';
+import React, { useState } from "react";
+import {
+  Alert,
+  FlatList,
+  Image,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import QRCode from "react-native-qrcode-svg";
+import Layout from "../src/component/layout"; // Assumindo que você ainda usa Layout
+import { useCart } from "../src/context/CartContext";
+import { useOrders } from "../src/context/OrderContext";
+import { CartItem } from "../src/types";
 
 const CartScreen = () => {
-  const { cart, removeFromCart, updateQuantity, clearCart, cartTotal, cartItemCount } = useCart();
+  const {
+    items,
+    removeItemFromCart,
+    updateQuantity,
+    clearCart,
+    total,
+    itemCount,
+  } = useCart();
   const { createOrder } = useOrders();
+
+  const [isModalVisible, setModalVisible] = useState(false);
 
   const handleCheckout = async () => {
     try {
-      await createOrder(cart, cartTotal);
-      Alert.alert('Sucesso!', 'Pedido realizado com sucesso!');
-      clearCart();
+      await createOrder(items, total);
+      setModalVisible(true);
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível finalizar o pedido.');
+      Alert.alert("Erro", "Não foi possível finalizar o pedido.");
     }
   };
 
-  const handleRemoveItem = (productId: string | number) => {
-    removeFromCart(productId);
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    clearCart();
   };
 
-  const handleUpdateQuantity = (productId: string | number, quantity: number) => {
+  const handleRemoveItem = (productId: string | number) => {
+    removeItemFromCart(productId);
+  };
+
+  const handleUpdateQuantity = (
+    productId: string | number,
+    quantity: number
+  ) => {
     updateQuantity(productId, quantity);
   };
 
-  if (cart.length === 0) {
+  if (itemCount === 0) {
     return (
       <Layout>
+               {" "}
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Seu carrinho está vazio</Text>
+                   {" "}
+          <Text style={styles.emptyText}>Seu carrinho está vazio</Text>       {" "}
         </View>
+             {" "}
       </Layout>
     );
   }
 
   return (
     <Layout>
+           {" "}
       <View style={styles.container}>
+               {" "}
         <FlatList
-          data={cart}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
+          data={items}
+          keyExtractor={(item: CartItem) => item.id.toString()}
+          renderItem={({ item }: { item: CartItem }) => (
             <View style={styles.cartItem}>
+              {/* Imagem do Produto (Opcional, adicionei para um layout mais completo) */}
+              <Image
+                source={{
+                  uri:
+                    item.images && item.images.length > 0
+                      ? item.images[0]
+                      : "https://via.placeholder.com/60",
+                }}
+                style={styles.itemImage}
+              />
+                           {" "}
               <View style={styles.itemInfo}>
-                <Text style={styles.itemName}>{item.name}</Text>
+                                <Text style={styles.itemName}>{item.name}</Text>
+                               {" "}
                 <Text style={styles.itemPrice}>R$ {item.price.toFixed(2)}</Text>
+                             {" "}
               </View>
+                           {" "}
               <View style={styles.quantityControls}>
-                <TouchableOpacity 
+                               {" "}
+                <TouchableOpacity
                   style={styles.quantityButton}
-                  onPress={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                  onPress={() =>
+                    handleUpdateQuantity(item.id, item.quantity - 1)
+                  }
                 >
-                  <Text style={styles.quantityButtonText}>-</Text>
+                                   {" "}
+                  <Text style={styles.quantityButtonText}>-</Text>             
+                   {" "}
                 </TouchableOpacity>
-                <Text style={styles.quantityText}>{item.quantity}</Text>
-                <TouchableOpacity 
+                               {" "}
+                <Text style={styles.quantityText}>{item.quantity}</Text>       
+                       {" "}
+                <TouchableOpacity
                   style={styles.quantityButton}
-                  onPress={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                  onPress={() =>
+                    handleUpdateQuantity(item.id, item.quantity + 1)
+                  }
                 >
-                  <Text style={styles.quantityButtonText}>+</Text>
+                                   {" "}
+                  <Text style={styles.quantityButtonText}>+</Text>             
+                   {" "}
                 </TouchableOpacity>
-                <TouchableOpacity 
+                               {" "}
+                <TouchableOpacity
                   style={styles.removeButton}
                   onPress={() => handleRemoveItem(item.id)}
                 >
-                  <Text style={styles.removeButtonText}>×</Text>
+                                   {" "}
+                  <Text style={styles.removeButtonText}>×</Text>               {" "}
                 </TouchableOpacity>
+                             {" "}
               </View>
+                           {" "}
               <Text style={styles.itemTotal}>
-                R$ {(item.price * item.quantity).toFixed(2)}
+                                R$ {(item.price * item.quantity).toFixed(2)}   
+                         {" "}
               </Text>
+                         {" "}
             </View>
           )}
         />
-        
+                       {" "}
         <View style={styles.footer}>
+                   {" "}
           <View style={styles.totalContainer}>
-            <Text style={styles.totalText}>Total: R$ {cartTotal.toFixed(2)}</Text>
-            <Text style={styles.itemsCount}>{cartItemCount} itens</Text>
+                       {" "}
+            <Text style={styles.totalText}>Total: R$ {total.toFixed(2)}</Text> 
+                      <Text style={styles.itemsCount}>{itemCount} itens</Text> 
+                   {" "}
           </View>
-          <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
-            <Text style={styles.checkoutButtonText}>Finalizar Pedido</Text>
+                   {" "}
+          <TouchableOpacity
+            style={styles.checkoutButton}
+            onPress={handleCheckout}
+          >
+                       {" "}
+            <Text style={styles.checkoutButtonText}>Finalizar Pedido</Text>     
+               {" "}
           </TouchableOpacity>
+                 {" "}
         </View>
+        <Modal
+          visible={isModalVisible}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={handleCloseModal}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Pedido Realizado!</Text>
+              <Text style={styles.modalDescription}>
+                Escaneie o QR Code para pagar:
+              </Text>
+              <View style={styles.qrCodeContainer}>
+                <QRCode
+                  value={`valor_total=${total.toFixed(
+                    2
+                  )}&timestamp=${Date.now()}`}
+                  size={220}
+                  backgroundColor="white"
+                  color="black"
+                />
+              </View>
+              <Text style={styles.modalTotal}>
+                Valor: R$ {total.toFixed(2)}
+              </Text>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={handleCloseModal}
+              >
+                <Text style={styles.modalButtonText}>Fechar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+             {" "}
       </View>
+         {" "}
     </Layout>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 18,
-    color: '#666',
-  },
+  container: { flex: 1, padding: 16 },
+  emptyContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  emptyText: { fontSize: 18, color: "#666" },
+  // CORREÇÕES AQUI
   cartItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: 'white',
+    flexDirection: "row",
+    alignItems: "center", // Alinha os itens verticalmente no centro
+    padding: 12, // Um pouco menos de padding
+    backgroundColor: "white",
     borderRadius: 8,
     marginBottom: 8,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
+    flexWrap: "wrap", // Permite que os itens quebrem a linha se não houver espaço
+    justifyContent: "space-between", // Distribui o espaço entre os itens
+  },
+  itemImage: {
+    // Adicionado estilo para a imagem (se você optar por usá-la)
+    width: 60,
+    height: 60,
+    borderRadius: 30, // Deixa a imagem redonda
+    marginRight: 12,
+    backgroundColor: "#f0f0f0", // Cor de fundo para placeholders
   },
   itemInfo: {
-    flex: 1,
+    flex: 1, // Permite que o nome e preço ocupem o espaço disponível
+    marginRight: 10, // Espaçamento entre as infos do item e os controles de quantidade
   },
-  itemName: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  itemPrice: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
+  itemName: { fontSize: 16, fontWeight: "600", color: "#333" },
+  itemPrice: { fontSize: 14, color: "#666", marginTop: 4 },
   quantityControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    // Removido marginHorizontal para melhor controle, use gap ou padding se necessário
   },
   quantityButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#4a90e2',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#4a90e2",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  quantityButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  quantityText: {
-    marginHorizontal: 12,
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  quantityButtonText: { color: "white", fontSize: 16, fontWeight: "bold" },
+  quantityText: { marginHorizontal: 10, fontSize: 16, fontWeight: "600" }, // Ajustado o margin
   removeButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#e74c3c',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
-  },
-  removeButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+    backgroundColor: "#e74c3c",
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 10,
+  }, // Ajustado o margin
+  removeButtonText: { color: "white", fontSize: 16, fontWeight: "bold" },
   itemTotal: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2c3e50',
+    fontWeight: "bold",
+    color: "#2c3e50",
+    minWidth: 70, // Garante que o total tenha um espaço mínimo para não quebrar
+    textAlign: "right", // Alinha o texto à direita
+    marginLeft: 10, // Espaçamento à esquerda
   },
   footer: {
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: "#e0e0e0",
     paddingTop: 16,
     marginTop: 16,
   },
   totalContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
-  totalText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-  },
-  itemsCount: {
-    fontSize: 14,
-    color: '#666',
-  },
+  totalText: { fontSize: 20, fontWeight: "bold", color: "#2c3e50" },
+  itemsCount: { fontSize: 14, color: "#666" },
   checkoutButton: {
-    backgroundColor: '#2ecc71',
+    backgroundColor: "#2ecc71",
     padding: 16,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
-  checkoutButtonText: {
-    color: 'white',
+  checkoutButtonText: { color: "white", fontSize: 16, fontWeight: "bold" },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 24,
+    borderRadius: 16,
+    width: "100%",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#1e293b",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  modalDescription: {
     fontSize: 16,
-    fontWeight: 'bold',
+    color: "#475569",
+    marginBottom: 20,
+    textAlign: "center",
   },
+  qrCodeContainer: {
+    marginBottom: 20,
+    padding: 10,
+    backgroundColor: "white",
+    borderRadius: 8,
+  },
+  modalTotal: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#1e293b",
+    marginBottom: 24,
+  },
+  modalCloseButton: {
+    backgroundColor: "#4a90e2",
+    paddingVertical: 14,
+    borderRadius: 8,
+    width: "100%",
+    alignItems: "center",
+  },
+  modalButtonText: { color: "white", fontSize: 16, fontWeight: "bold" },
 });
 
 export default CartScreen;
