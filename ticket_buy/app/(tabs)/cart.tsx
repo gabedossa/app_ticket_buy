@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router"; // 1. ADICIONADO: Importar o hook de navegação
 import React, { useState } from "react";
 import {
@@ -11,7 +12,6 @@ import {
   View,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
-import Svg from "react-native-svg";
 import Layout from "../src/component/layout";
 import { useCart } from "../src/context/CartContext";
 import { useOrders } from "../src/context/OrderContext";
@@ -29,7 +29,8 @@ const CartScreen = () => {
   const { createOrder } = useOrders();
 
   const [isModalVisible, setModalVisible] = useState(false);
-  const router = useRouter(); // 2. ADICIONADO: Inicializar o router
+
+  const router = useRouter();
 
   const handleCheckout = async () => {
     try {
@@ -60,6 +61,23 @@ const CartScreen = () => {
   if (itemCount === 0) {
     return (
       <Layout>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.push("/(tabs)/menu")}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Text style={styles.BackText}>Voltar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)/cart")}
+            style={styles.cartButton}
+          >
+            <View style={styles.counterBack}>
+              <Text style={styles.serverStatus}>
+                {itemCount > 0 ? `${itemCount}` : `0`}
+              </Text>
+            </View>
+            <Text style={styles.carrinhoText}>Carrinho</Text>
+          </TouchableOpacity>
+        </View>
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>Seu carrinho está vazio</Text>
         </View>
@@ -70,14 +88,9 @@ const CartScreen = () => {
   return (
     <Layout>
       <View style={styles.header}>
-        <View style={styles.headerTitleContainer}>
-          <Svg height="24" width="24"></Svg>
-          <Text style={styles.headerTitle}>Ticketeria</Text>
-        </View>
-        <TouchableOpacity onPress={() => router.push("/(tabs)/admin")}>
-          <View style={styles.admBtn}>
-            <Text style={styles.admText}>Adm</Text>
-          </View>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/menu")}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Text style={styles.BackText}>Voltar</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => router.push("/(tabs)/cart")}
@@ -211,8 +224,20 @@ const styles = StyleSheet.create({
     color: "white",
     marginLeft: 8,
   },
-  cartButton: { width: 80, height: 40, alignItems: "center", justifyContent: "center", backgroundColor: "#913800ff", borderRadius: 16 },
-    serverStatus: { fontSize: 14, color: "#000", opacity: 0.95, fontWeight: "500" },
+  cartButton: {
+    width: 80,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#913800ff",
+    borderRadius: 16,
+  },
+  serverStatus: {
+    fontSize: 14,
+    color: "#000",
+    opacity: 0.95,
+    fontWeight: "500",
+  },
   admBtn: {
     width: 80,
     height: 40,
@@ -257,7 +282,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-   counterBack: { width: 18, height: 18, position: "absolute", top: 0, right: 0, display: "flex", justifyContent: "center", alignItems: "center", fontWeight: 700, backgroundColor: "rgba(255, 204, 0, 1)", borderRadius: 18 },
+  counterBack: {
+    width: 18,
+    height: 18,
+    position: "absolute",
+    top: 0,
+    right: 0,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    fontWeight: 700,
+    backgroundColor: "rgba(255, 204, 0, 1)",
+    borderRadius: 18,
+  },
   quantityButton: {
     width: 32,
     height: 32,
@@ -286,6 +323,9 @@ const styles = StyleSheet.create({
     minWidth: 70,
     textAlign: "right",
     marginLeft: 10,
+  },
+  BackText: {
+    color: "#FFF",
   },
   footer: {
     borderTopWidth: 1,
