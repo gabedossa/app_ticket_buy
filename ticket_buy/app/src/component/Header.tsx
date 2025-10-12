@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router'; // ← Mudar para useRouter
+import { useRouter } from 'expo-router';
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { styles } from './Header/HeaderStyleSheet';
@@ -24,15 +24,15 @@ const Header: React.FC<HeaderProps> = ({
   onAdminPress,
   onCartPress
 }) => {
-  const router = useRouter(); // ← Usar useRouter hook
+  const router = useRouter(); 
 
   const handleAdminPress = () => {
     if (onAdminPress) {
       onAdminPress();
     } else if (setScreen) {
-      setScreen('admin'); // ← Se usar setScreen, apenas o nome da tela
+      setScreen('admin');
     } else {
-      router.push('/(tabs)/admin'); // ← Caminho completo com barra no início
+      router.push('/(tabs)/admin');
     }
   };
 
@@ -40,9 +40,9 @@ const Header: React.FC<HeaderProps> = ({
     if (onCartPress) {
       onCartPress();
     } else if (setScreen) {
-      setScreen('cart'); // ← Se usar setScreen, apenas o nome da tela
+      setScreen('cart');
     } else {
-      router.push('/(tabs)/cart'); // ← Caminho completo com barra no início
+      router.push('/(tabs)/cart');
     }
   };
 
