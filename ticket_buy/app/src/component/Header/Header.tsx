@@ -1,8 +1,11 @@
+// app/components/MenuHeader.tsx
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { styles } from './Header/HeaderStyleSheet';
+import { styles } from './HeaderStyleSheet';
 
-interface HeaderProps {
+interface MenuHeaderProps {
   screen?: string;
   title?: string;
   setScreen?: (screen: string) => void;
@@ -13,35 +16,36 @@ interface HeaderProps {
   onCartPress?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ 
-  screen, 
-  title = "Ticketeria", 
-  setScreen, 
-  showAdminButton = true, 
-  showCartButton = true, 
+export const MenuHeader: React.FC<MenuHeaderProps> = ({
+  title = "Ticketeria",
   cartItemCount = 0,
+  showAdminButton = true,
+  showCartButton = true,
   onAdminPress,
   onCartPress
 }) => {
+  const router = useRouter();
+
   const handleAdminPress = () => {
     if (onAdminPress) {
       onAdminPress();
-    } else if (setScreen) {
-      setScreen('admin');
+    } else {
+      router.push('/(tabs)/admin');
     }
   };
 
   const handleCartPress = () => {
     if (onCartPress) {
       onCartPress();
-    } else if (setScreen) {
-      setScreen('cart');
+    } else {
+      router.push('/(tabs)/cart');
     }
   };
 
   return (
     <View style={styles.header}>
       <View style={styles.headerTitleContainer}>
+        <Ionicons name="fast-food" size={24} color="#fff" />
         <Text style={styles.headerTitle}>{title}</Text>
       </View>
       
@@ -62,7 +66,7 @@ const Header: React.FC<HeaderProps> = ({
                   <Text style={styles.counterText}>{cartItemCount}</Text>
                 </View>
               )}
-              <Text style={styles.btnText}>Carrinho</Text>
+              <Text style={styles.carrinhoText}>Carrinho</Text>
             </View>
           </TouchableOpacity>
         )}
@@ -71,4 +75,4 @@ const Header: React.FC<HeaderProps> = ({
   );
 };
 
-export default Header;
+export default MenuHeader;

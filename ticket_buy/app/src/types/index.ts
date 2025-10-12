@@ -10,6 +10,16 @@ export interface Product {
   images?: string[]; 
 }
 
+export interface MenuHeaderProps {
+  title?: string;
+  cartItemCount?: number;
+  showAdminButton?: boolean;
+  showCartButton?: boolean;
+  onAdminPress?: () => void;
+  onCartPress?: () => void;
+}
+
+
 export interface CartItem extends Product {
   quantity: number;
 }

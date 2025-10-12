@@ -1,42 +1,51 @@
-import { FontAwesome } from '@expo/vector-icons';
+// app/src/component/cartListItem.tsx - VERSÃO CORRIGIDA
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Colors } from '../constants/Colors';
-import { useCart } from '../context/CartContext';
-import { CartItem } from '../types';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Colors } from '../constants/Colors'; // ← Import correto
 
-type CartListItemProps = {
-  item: CartItem;
-};
+interface CartListItemProps {
+  item: any;
+  onUpdateQuantity: (itemId: string, newQuantity: number) => void;
+  onRemove: (itemId: string) => void;
+}
 
-const CartListItem = ({ item }: CartListItemProps) => {
-  const { addToCart, removeFromCart } = useCart();
-
+const CartListItem: React.FC<CartListItemProps> = ({
+  item,
+  onUpdateQuantity,
+  onRemove,
+}) => {
   return (
     <View style={styles.container}>
-      {/* Detalhes do Item */}
-      <View style={styles.itemDetails}>
+      <View style={styles.itemInfo}>
         <Text style={styles.itemName}>{item.name}</Text>
         <Text style={styles.itemPrice}>R$ {item.price.toFixed(2)}</Text>
       </View>
-
-      {/* Seletor de Quantidade */}
-      <View style={styles.quantitySelector}>
-        <Pressable onPress={() => removeFromCart(item.id)}>
-          <FontAwesome name="minus-circle" size={24} color={Colors.primary} />
-        </Pressable>
-
+      
+      <View style={styles.quantityContainer}>
+        <TouchableOpacity 
+          style={styles.quantityButton}
+          onPress={() => onUpdateQuantity(item.id, item.quantity - 1)}
+        >
+          <Ionicons name="remove" size={16} color={Colors.white} />
+        </TouchableOpacity>
+        
         <Text style={styles.quantityText}>{item.quantity}</Text>
-
-        <Pressable onPress={() => addToCart(item)}>
-          <FontAwesome name="plus-circle" size={24} color={Colors.primary} />
-        </Pressable>
+        
+        <TouchableOpacity 
+          style={styles.quantityButton}
+          onPress={() => onUpdateQuantity(item.id, item.quantity + 1)}
+        >
+          <Ionicons name="add" size={16} color={Colors.white} />
+        </TouchableOpacity>
       </View>
       
-      {/* Preço Total do Item */}
-      <Text style={styles.totalPrice}>
-        R$ {(item.price * item.quantity).toFixed(2)}
-      </Text>
+      <TouchableOpacity 
+        style={styles.removeButton}
+        onPress={() => onRemove(item.id)}
+      >
+        <Ionicons name="trash" size={18} color={Colors.white} />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -45,41 +54,58 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.lightGray,
+    backgroundColor: Colors.white,
+    padding: 16,
+    marginVertical: 4,
+    marginHorizontal: 16,
+    borderRadius: 8,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  itemDetails: {
+  itemInfo: {
     flex: 1,
   },
   itemName: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.textDark,
+    color: Colors.text,
+    marginBottom: 4,
   },
   itemPrice: {
     fontSize: 14,
-    color: Colors.darkGray,
+    color: Colors.gray,
   },
-  quantitySelector: {
+  quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginHorizontal: 16,
+    marginHorizontal: 12,
+  },
+  quantityButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   quantityText: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    marginHorizontal: 12,
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text,
     minWidth: 20,
     textAlign: 'center',
   },
-  totalPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.textDark,
-    width: 80, // Largura fixa para alinhar os totais
-    textAlign: 'right',
+  removeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
