@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router"; // 1. ADICIONADO: Importar o hook de navegação
 import React, { useState } from "react";
 import {
@@ -12,6 +11,7 @@ import {
   View,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
+import Header from "../src/component/Header/Header";
 import Layout from "../src/component/layout";
 import { useCart } from "../src/context/CartContext";
 import { useOrders } from "../src/context/OrderContext";
@@ -44,7 +44,7 @@ const CartScreen = () => {
   const handleCloseModal = () => {
     setModalVisible(false);
     clearCart();
-    router.navigate("/(tabs)/menu");
+    router.navigate("/(tabs)/HomeScreen");
   };
 
   const handleRemoveItem = (productId: string | number) => {
@@ -62,21 +62,7 @@ const CartScreen = () => {
     return (
       <Layout>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.push("/(tabs)/menu")}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
-            <Text style={styles.BackText}>Voltar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => router.push("/(tabs)/cart")}
-            style={styles.cartButton}
-          >
-            <View style={styles.counterBack}>
-              <Text style={styles.serverStatus}>
-                {itemCount > 0 ? `${itemCount}` : `0`}
-              </Text>
-            </View>
-            <Text style={styles.carrinhoText}>Carrinho</Text>
-          </TouchableOpacity>
+            <Header />
         </View>
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>Seu carrinho está vazio</Text>
@@ -88,22 +74,9 @@ const CartScreen = () => {
   return (
     <Layout>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push("/(tabs)/menu")}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-          <Text style={styles.BackText}>Voltar</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => router.push("/(tabs)/cart")}
-          style={styles.cartButton}
-        >
-          <View style={styles.counterBack}>
-            <Text style={styles.serverStatus}>
-              {itemCount > 0 ? `${itemCount}` : `0`}
-            </Text>
-          </View>
-          <Text style={styles.carrinhoText}>Carrinho</Text>
-        </TouchableOpacity>
-      </View>
+            <Header />
+        </View>
+      <View style={styles.header}></View>
 
       <View style={styles.container}>
         <FlatList

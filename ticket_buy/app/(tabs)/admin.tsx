@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import Header from '../src/component/Header/Header';
 import { ProductService } from '../src/service/ProductService';
 
 // Tipos
@@ -250,51 +251,7 @@ const AdminScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-          <Text style={styles.backButtonText}>Voltar</Text>
-        </TouchableOpacity>
-        
-        <Text style={styles.title}>Painel Admin</Text>
-        
-        <TouchableOpacity 
-          style={styles.addButton}
-          onPress={() => {
-            resetForm();
-            setShowProductModal(true);
-          }}
-        >
-          <Ionicons name="add" size={20} color="#fff" />
-          <Text style={styles.addButtonText}>Novo</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Estatísticas */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{products.length}</Text>
-          <Text style={styles.statLabel}>Total</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>
-            {products.filter(p => p.isAvailable).length}
-          </Text>
-          <Text style={styles.statLabel}>Disponíveis</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>
-            {products.filter(p => !p.isAvailable).length}
-          </Text>
-          <Text style={styles.statLabel}>Ocultos</Text>
-        </View>
-      </View>
-
-      {/* Filtros por Categoria */}
+      <Header/>
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false}

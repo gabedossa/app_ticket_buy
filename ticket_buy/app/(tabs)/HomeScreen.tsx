@@ -18,7 +18,7 @@ import { useCart } from "../src/context/CartContext";
 import { ProductService } from "../src/service/ProductService";
 import { Product } from "../src/types";
 
-const Menu = () => {
+const HomeScreen = () => {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +70,6 @@ const Menu = () => {
     <TouchableOpacity
       style={styles.productCard}
       onPress={() => {
-        console.log("🟢 Clicou no produto:", item.name);
         setSelectedProduct(item);
       }}
     >
@@ -227,4 +226,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Menu;
+export default HomeScreen;

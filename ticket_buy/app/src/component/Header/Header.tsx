@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -45,9 +46,13 @@ const Header: React.FC<HeaderProps> = ({
       router.push('/(tabs)/cart');
     }
   };
+  let nome = router.setParams.name;
 
   return (
     <View style={styles.header}>
+      <TouchableOpacity onPress={() => router.push("/HomeScreen")}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
       <View style={styles.headerTitleContainer}>
         <Text style={styles.headerTitle}>{title}</Text>
       </View>

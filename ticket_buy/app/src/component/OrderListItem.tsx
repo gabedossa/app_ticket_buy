@@ -3,7 +3,6 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Colors } from '../constants/Colors';
 import { Order } from '../types';
 
-// Mapeamento de status para cores e texto
 const statusDetails = {
   'em preparo': {
     backgroundColor: Colors.warning,

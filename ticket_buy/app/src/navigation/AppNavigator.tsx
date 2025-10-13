@@ -2,7 +2,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
 import AdminScreen from '../../(tabs)/admin';
 import CartScreen from '../../(tabs)/cart';
-import MenuScreen from '../../(tabs)/menu';
+import HomeScreen from '../../(tabs)/HomeScreen';
 
 import { Ionicons } from '@expo/vector-icons';
 
@@ -25,29 +25,26 @@ const AppNavigator = () => {
             iconName = 'ellipse';
           }
 
-          // Você pode retornar qualquer componente aqui!
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#4a90e2', // Cor da aba ativa
-        tabBarInactiveTintColor: 'gray',   // Cor da aba inativa
+        tabBarActiveTintColor: '#4a90e2',
+        tabBarInactiveTintColor: 'gray',
         headerStyle: {
-          backgroundColor: '#4a90e2', // Cor do cabeçalho
+          backgroundColor: '#4a90e2',
         },
-        headerTintColor: '#fff', // Cor do texto do cabeçalho
+        headerTintColor: '#fff',
         headerTitleStyle: {
           fontWeight: 'bold',
         },
       })}
     >
       <Tab.Screen 
-        name="Cardápio" 
-        component={MenuScreen} 
+        name="Home" 
+        component={HomeScreen} 
       />
       <Tab.Screen 
         name="Carrinho" 
         component={CartScreen} 
-        // Aqui você pode adicionar um "badge" com a contagem de itens
-        // options={{ tabBarBadge: 3 }} 
       />
       <Tab.Screen 
         name="Admin" 
