@@ -1,11 +1,9 @@
-// app/components/MenuHeader.tsx
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { styles } from './HeaderStyleSheet';
 
-interface MenuHeaderProps {
+interface HeaderProps {
   screen?: string;
   title?: string;
   setScreen?: (screen: string) => void;
@@ -16,19 +14,23 @@ interface MenuHeaderProps {
   onCartPress?: () => void;
 }
 
-export const MenuHeader: React.FC<MenuHeaderProps> = ({
-  title = "Ticketeria",
+const Header: React.FC<HeaderProps> = ({ 
+  screen, 
+  title = "Ticketeria", 
+  setScreen, 
+  showAdminButton = true, 
+  showCartButton = true, 
   cartItemCount = 0,
-  showAdminButton = true,
-  showCartButton = true,
   onAdminPress,
   onCartPress
 }) => {
-  const router = useRouter();
+  const router = useRouter(); 
 
   const handleAdminPress = () => {
     if (onAdminPress) {
       onAdminPress();
+    } else if (setScreen) {
+      setScreen('admin');
     } else {
       router.push('/(tabs)/admin');
     }
@@ -37,6 +39,8 @@ export const MenuHeader: React.FC<MenuHeaderProps> = ({
   const handleCartPress = () => {
     if (onCartPress) {
       onCartPress();
+    } else if (setScreen) {
+      setScreen('cart');
     } else {
       router.push('/(tabs)/cart');
     }
@@ -45,7 +49,6 @@ export const MenuHeader: React.FC<MenuHeaderProps> = ({
   return (
     <View style={styles.header}>
       <View style={styles.headerTitleContainer}>
-        <Ionicons name="fast-food" size={24} color="#fff" />
         <Text style={styles.headerTitle}>{title}</Text>
       </View>
       
@@ -66,7 +69,7 @@ export const MenuHeader: React.FC<MenuHeaderProps> = ({
                   <Text style={styles.counterText}>{cartItemCount}</Text>
                 </View>
               )}
-              <Text style={styles.carrinhoText}>Carrinho</Text>
+              <Text style={styles.btnText}>Carrinho</Text>
             </View>
           </TouchableOpacity>
         )}
@@ -75,4 +78,4 @@ export const MenuHeader: React.FC<MenuHeaderProps> = ({
   );
 };
 
-export default MenuHeader;
+export default Header;

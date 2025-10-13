@@ -3,8 +3,6 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
-  Image,
-  Modal,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -13,7 +11,9 @@ import {
   View,
 } from "react-native";
 
-import Header from "../src/component/Header";
+import Header from "../src/component/Header/Header";
+import ModalProduct from "../src/component/modalProduct/ModalProduct";
+import ProductCard from "../src/component/ProductCard/ProductCard";
 import { useCart } from "../src/context/CartContext";
 import { ProductService } from "../src/service/ProductService";
 import { Product } from "../src/types";
@@ -52,11 +52,9 @@ const Menu = () => {
     loadProducts();
   }, []);
 
-  const handleAddToCart = (product: Product | null) => {
-    if (!product) return;
-    addToCart(product);
-    setSelectedProduct(null);
-  };
+  // DEBUG
+  console.log("🔵 Selected Product:", selectedProduct?.name);
+  console.log("🔵 Modal Visible:", !!selectedProduct);
 
   const filteredProducts =
     categoryFilter === "all"
@@ -71,22 +69,12 @@ const Menu = () => {
   const renderProduct = ({ item }: { item: Product }) => (
     <TouchableOpacity
       style={styles.productCard}
-      onPress={() => setSelectedProduct(item)}
+      onPress={() => {
+        console.log("🟢 Clicou no produto:", item.name);
+        setSelectedProduct(item);
+      }}
     >
-      <Image
-        source={{
-          uri:
-            item.images?.[0] ||
-            `https://placehold.co/300x300?text=${item.name?.charAt(0)}`,
-        }}
-        style={styles.productImage}
-      />
-      <View style={styles.productInfo}>
-        <Text style={styles.productName} numberOfLines={1}>
-          {item.name}
-        </Text>
-        <Text style={styles.productPrice}>R$ {item.price.toFixed(2)}</Text>
-      </View>
+      <ProductCard product={item} />
     </TouchableOpacity>
   );
 
@@ -108,8 +96,13 @@ const Menu = () => {
         showCartButton={true}
       />
 
-      <View>
-        <ScrollView horizontal contentContainerStyle={styles.categories}>
+      {/* Filtros de Categoria */}
+      <View style={styles.categoriesSection}>
+        <ScrollView 
+          horizontal 
+          contentContainerStyle={styles.categories}
+          showsHorizontalScrollIndicator={false}
+        >
           {categories.map((category) => (
             <TouchableOpacity
               key={category}
@@ -132,56 +125,31 @@ const Menu = () => {
         </ScrollView>
       </View>
 
+      {/* Lista de Produtos */}
       <FlatList
         data={filteredProducts}
         renderItem={renderProduct}
         keyExtractor={(item) => item.id.toString()}
         numColumns={2}
         contentContainerStyle={styles.productsGrid}
-        columnWrapperStyle={{ gap: 12 }}
+        columnWrapperStyle={styles.columnWrapper}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={() => (
-          <View style={styles.centerContent}>
-            <Text>Nenhum produto encontrado.</Text>
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>Nenhum produto encontrado</Text>
           </View>
         )}
       />
 
-      <Modal
+      {/* Modal do Produto */}
+      <ModalProduct
         visible={!!selectedProduct}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setSelectedProduct(null)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Image
-              source={{ uri: selectedProduct?.images?.[0] || "..." }}
-              style={styles.modalImage}
-            />
-            <Text style={styles.modalTitle}>{selectedProduct?.name}</Text>
-            <Text style={styles.modalDescription}>
-              {selectedProduct?.description}
-            </Text>
-            <View style={styles.modalFooter}>
-              <Text style={styles.modalPrice}>
-                R$ {selectedProduct?.price.toFixed(2)}
-              </Text>
-              <TouchableOpacity
-                style={styles.modalButton}
-                onPress={() => handleAddToCart(selectedProduct)}
-              >
-                <Text style={styles.modalButtonText}>Adicionar</Text>
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setSelectedProduct(null)}
-            >
-              <Text style={styles.closeButtonText}>×</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        product={selectedProduct}
+        onClose={() => {
+          console.log("🔴 Fechando modal");
+          setSelectedProduct(null);
+        }}
+      />
     </SafeAreaView>
   );
 };
@@ -191,39 +159,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f0f2f5",
   },
-  fullScreen: {
-    flex: 1,
-  },
-  centerContent: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  admText: {
-    color: "#555",
-  },
-  backButton: {
-    marginLeft: -8,
-  },
-  carrinhoText: {
-    color: "#FFF",
-  },
-  cartButton: {
-    width: 80,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#913800ff",
-    borderRadius: 16,
-  },
-  serverStatus: {
-    fontSize: 14,
-    color: "#000",
-    opacity: 0.95,
-    fontWeight: "500",
+  categoriesSection: {
+    backgroundColor: "white",
+    paddingVertical: 8,
   },
   categories: {
-    paddingVertical: 12,
     paddingHorizontal: 16,
   },
   categoryBtn: {
@@ -239,6 +179,7 @@ const styles = StyleSheet.create({
   categoryBtnText: {
     color: "#333",
     fontWeight: "500",
+    fontSize: 14,
   },
   categoryBtnTextActive: {
     color: "white",
@@ -247,6 +188,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 20,
+  },
+  columnWrapper: {
+    gap: 12,
   },
   productCard: {
     flex: 1,
@@ -260,104 +204,26 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 1.41,
   },
-  productImage: {
-    width: "100%",
-    height: 120,
-  },
-  productInfo: {
-    padding: 12,
+  centerContent: {
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
   },
-  productName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 60,
   },
-  productPrice: {
+  emptyText: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#2c3e50",
-    marginTop: 4,
+    color: "#666",
+    textAlign: "center",
   },
   loadingText: {
     marginTop: 16,
     color: "#666",
     fontSize: 16,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: "white",
-    borderRadius: 16,
-    width: "100%",
-    padding: 24,
-    elevation: 5,
-    alignItems: "center",
-  },
-  modalImage: {
-    width: "100%",
-    height: 180,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#751700ff",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  modalDescription: {
-    fontSize: 16,
-    color: "#420d00ff",
-    lineHeight: 24,
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  modalFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: "#EEE",
-    alignItems: "center",
-    marginTop: 16,
-    width: "100%",
-  },
-  modalPrice: {
-    fontSize: 20,
-    marginLeft: 8,
-    fontWeight: "bold",
-    color: "#751700ff",
-  },
-  modalButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    backgroundColor: "#961e00ff",
-    borderRadius: 8,
-  },
-  modalButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  closeButton: {
-    width: 34,
-    height: 34,
-    display: "flex",
-    borderRadius: 32,
-    alignItems: "center",
-    backgroundColor: "#961e00ff",
-    position: "absolute",
-    top: 10,
-    right: 15,
-  },
-  closeButtonText: {
-    fontSize: 22,
-    color: "#FFF",
   },
 });
 
