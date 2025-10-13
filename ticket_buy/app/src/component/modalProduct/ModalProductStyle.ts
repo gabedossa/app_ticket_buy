@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { Colors } from "../../constants/Colors";
 
 export const styles = StyleSheet.create({
     modalOverlay: {
@@ -9,12 +10,12 @@ export const styles = StyleSheet.create({
         padding: 20,
     },
     modalContent: {
-        backgroundColor: "#1a1a1a",
+        backgroundColor: Colors.white,
         borderRadius: 16,
         width: "100%",
         maxWidth: 360,
         borderWidth: 1,
-        borderColor: "#2a2a2a",
+        borderColor: Colors.text,
         overflow: "hidden",
     },
     modalImage: {
@@ -27,13 +28,13 @@ export const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 22,
         fontWeight: "bold",
-        color: "#ffffff",
+        color: Colors.text,
         textAlign: "center",
         marginBottom: 12,
     },
     modalDescription: {
         fontSize: 15,
-        color: "#ccc",
+        color: Colors.text,
         lineHeight: 22,
         textAlign: "center",
     },
@@ -42,14 +43,14 @@ export const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         padding: 20,
-        backgroundColor: "#222",
+        backgroundColor: Colors.white,
         borderTopWidth: 1,
         borderTopColor: "#3a3a3a",
     },
     modalPrice: {
         fontSize: 22,
         fontWeight: "bold",
-        color: "#ff6b35",
+        color: Colors.secondary,
     },
     modalButtonContainer: {
         flexDirection: 'row',
@@ -59,12 +60,12 @@ export const styles = StyleSheet.create({
     modalButton: {
         paddingVertical: 12,
         paddingHorizontal: 20,
-        backgroundColor: "#ff6b35",
+        backgroundColor: Colors.secondary,
         borderRadius: 8,
         minWidth: 100,
     },
     modalButtonText: {
-        color: "white",
+        color: Colors.white,
         fontSize: 14,
         fontWeight: "700",
         textAlign: "center",
@@ -75,11 +76,11 @@ export const styles = StyleSheet.create({
         backgroundColor: "transparent",
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#666',
+        borderColor: Colors.secondary,
         minWidth: 80,
     },
     modalSecondaryButtonText: {
-        color: '#ccc',
+        color: Colors.secondary,
         fontSize: 14,
         fontWeight: '600',
         textAlign: 'center',
@@ -91,13 +92,13 @@ export const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        alignItems: "center",
-        justifyContent: "center",
         backgroundColor: "rgba(0,0,0,0.5)",
         zIndex: 1,
     },
     closeButtonText: {
         fontSize: 20,
+        marginTop: 2,
+        textAlign:'center',
         color: "#ffffff",
         lineHeight: 22
     },
