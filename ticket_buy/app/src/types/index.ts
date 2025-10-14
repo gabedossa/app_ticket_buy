@@ -1,6 +1,6 @@
-// src/types/index.ts
 import React from 'react';
 
+// --- Tipos Gerais ---
 export type ProductCategory = 'lanches' | 'bebidas' | 'sobremesas';
 
 export interface Product {
@@ -10,16 +10,7 @@ export interface Product {
   tipo: ProductCategory;
   description: string;
   images: string[];
-  disponivel: boolean; 
-}
-
-export interface MenuHeaderProps {
-  title?: string;
-  cartItemCount?: number;
-  showAdminButton?: boolean;
-  showCartButton?: boolean;
-  onAdminPress?: () => void;
-  onCartPress?: () => void;
+  disponivel: boolean;
 }
 
 export interface CartItem extends Product {
@@ -31,31 +22,82 @@ export interface Order {
   items: CartItem[];
   total: number;
   status: 'em preparo' | 'pronto' | 'entregue';
-  timestamp: string; 
+  timestamp: string;
 }
 
 export type OrderStatus = Order['status'];
-
-export type CartAction = 
-  | { type: 'ADD_TO_CART'; payload: Product } 
-  | { type: 'REMOVE_FROM_CART'; payload: { productId: string | number } }
-  | { type: 'UPDATE_QUANTITY'; payload: { productId: string | number; newQuantity: number } }
-  | { type: 'CLEAR_CART' };
 
 export interface ProviderProps {
   children: React.ReactNode;
 }
 
+
+// --- Tipos de Contexto ---
+export interface CartContextType {
+  items: CartItem[];
+  addToCart: (product: Product) => void;
+  removeItemFromCart: (productId: string | number) => void;
+  updateQuantity: (productId: string | number, newQuantity: number) => void;
+  clearCart: () => void;
+  total: number;
+  itemCount: number;
+}
+
+export interface OrderContextType {
+  orders: Order[];
+  createOrder: (items: CartItem[], total: number) => Promise<void>;
+}
+
+
+// --- Tipos de Props de Componentes ---
+export interface MenuHeaderProps {
+  title?: string;
+  cartItemCount?: number;
+  showAdminButton?: boolean;
+  showCartButton?: boolean;
+  onAdminPress?: () => void;
+  onCartPress?: () => void;
+}
+
+export interface ModalProductProps {
+  visible: boolean;
+  product: Product | null;
+  onClose: () => void;
+  onAddToCart: (product: Product) => void;
+}
+
+export interface ProductCardProps {
+  product: Product;
+}
+
+export interface CategoryFilterProps {
+  categories: (ProductCategory | 'all')[];
+  selectedCategory: ProductCategory | 'all';
+  onSelectCategory: (category: ProductCategory | 'all') => void;
+}
+
+export interface ProductGridProps {
+  products: Product[];
+  onProductPress: (product: Product) => void;
+}
+
+
+// --- Tipos da API e DTOs ---
 export interface ProductAPI {
   id_produto?: string | number;
   idProduto?: string | number;
   id?: string | number;
-  nome: string;
-  preco: number;
-  tipo: ProductCategory;
-  descricao: string;
-  imagem: string;
-  disponivel: boolean;
+  nome?: string;
+  preco?: string | number;
+  tipo?: ProductCategory;
+  descricao?: string;
+  imagem?: string;
+  disponivel?: boolean;
+  name?: string;
+  price?: string | number;
+  category?: string;
+  description?: string;
+  image?: string;
 }
 
 export interface ProductCreateDTO {
@@ -68,27 +110,13 @@ export interface ProductCreateDTO {
 }
 
 
-export const normalizeProduct = (productData: any): Product => {
-  return {
-    id: productData.id_produto || productData.idProduto || productData.id,
-    name: productData.nome || productData.name,
-    price: parseFloat(productData.preco || productData.price || 0),
-    tipo: (productData.tipo || productData.category || 'lanches') as ProductCategory,
-    description: productData.descricao || productData.description || 'Sem descrição.',
-    images: productData.imagem || productData.image ? [productData.imagem || productData.image] : [],
-    disponivel: productData.disponivel !== undefined ? productData.disponivel : true,
-  };
-};
-
-export const isValidProduct = (product: any): product is Product => {
-  return (
-    product &&
-    (product.id !== undefined) &&
-    typeof product.name === 'string' &&
-    typeof product.price === 'number' &&
-    typeof product.tipo === 'string' &&
-    typeof product.description === 'string' &&
-    Array.isArray(product.images) &&
-    typeof product.disponivel === 'boolean'
-  );
-};
+// --- Tipos de Serviço ---
+export interface ProductServiceInterface {
+    getProducts: () => Promise<Product[]>;
+    getProductById: (id: string | number) => Promise<Product>;
+    getProductsByCategory: (categoria: string) => Promise<Product[]>;
+    createProduct: (productData: ProductCreateDTO) => Promise<Product>;
+    updateProduct: (id: string | number, productData: Partial<Product>) => Promise<Product>;
+    deleteProduct: (id: string | number) => Promise<{ success: boolean; message: string }>;
+    toggleProductAvailability: (id: string | number, disponivel: boolean) => Promise<Product>;
+}

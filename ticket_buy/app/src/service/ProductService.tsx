@@ -2,10 +2,6 @@
 import axios from 'axios';
 import { Product, ProductCreateDTO } from '../types';
 
-// ==================================================================
-// >> CORREÇÃO APLICADA AQUI <<
-// URL ajustada para funcionar com o Emulador Android.
-// ==================================================================
 const API_URL = 'http://192.168.18.7:8080/api/produtos';
 
 export const ProductService = {
@@ -145,6 +141,7 @@ export const ProductService = {
       }
     }
   },
+  
 };
 
 export default ProductService;

@@ -1,4 +1,3 @@
-// app/(tabs)/HomeScreen.tsx
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -12,19 +11,21 @@ import {
   View,
 } from "react-native";
 
-// ✅ CORREÇÃO: Caminho de importação ajustado (dois ".." para sair de app/(tabs))
 import Header from "../src/component/Header/Header";
-import ModalProduct from "../src/component/ModalProduct/ModalProduct"; // ← dois ".."
+import ModalProduct from "../src/component/ModalProduct/ModalProduct";
 import ProductCard from "../src/component/ProductCard/ProductCard";
 import { useCart } from "../src/context/CartContext";
 import { ProductService } from "../src/service/ProductService";
-import { Product, ProductCategory, normalizeProduct } from "../src/types";
+import { Product, ProductCategory } from "../src/types";
+import { normalizeProduct } from "../src/util/ProductUtils";
 
 const HomeScreen = () => {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [categoryFilter, setCategoryFilter] = useState<ProductCategory | 'all'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<ProductCategory | "all">(
+    "all"
+  );
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const { addToCart, itemCount } = useCart();
@@ -35,10 +36,9 @@ const HomeScreen = () => {
         setLoading(true);
         const productsData = await ProductService.getProducts();
 
-        // ✅ Garantir que normalizeProduct lida com dados ausentes
         const formattedProducts: Product[] = productsData
-          .map((p: any) => normalizeProduct(p))
-          .filter(p => p.id != null && p.name); // ← remove itens inválidos
+          .map(normalizeProduct) // Agora a função é usada corretamente
+          .filter((p) => p.id != null && p.name);
 
         setProducts(formattedProducts);
       } catch (error) {
@@ -51,22 +51,21 @@ const HomeScreen = () => {
   }, []);
 
   const filteredProducts =
-    categoryFilter === 'all'
+    categoryFilter === "all"
       ? products
       : products.filter((product) => product.tipo === categoryFilter);
 
-  // ✅ Extrair categorias únicas com fallback
   const uniqueCategories = Array.from(
-    new Set(products.map(p => p.tipo).filter(t => t !== undefined))
+    new Set(products.map((p) => p.tipo).filter((t) => t !== undefined))
   ) as ProductCategory[];
-  
-  const categories: (ProductCategory | 'all')[] = ['all', ...uniqueCategories];
+
+  const categories: (ProductCategory | "all")[] = ["all", ...uniqueCategories];
 
   const renderProduct = ({ item }: { item: Product }) => (
     <TouchableOpacity
       style={styles.productCard}
       onPress={() => setSelectedProduct(item)}
-      disabled={!item.name} // ← evita crash se name for inválido
+      disabled={!item.name}
     >
       <ProductCard product={item} />
     </TouchableOpacity>
@@ -88,14 +87,12 @@ const HomeScreen = () => {
         title="Ticketeria"
         showAdminButton={true}
         showCartButton={true}
-        onAdminPress={() => router.push('/admin')}
-        onCartPress={() => router.push('/cart')}
+        onAdminPress={() => router.push("/admin")}
+        onCartPress={() => router.push("/cart")}
       />
-
-      {/* Filtros de Categoria */}
       <View style={styles.categoriesSection}>
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           contentContainerStyle={styles.categories}
           showsHorizontalScrollIndicator={false}
         >
@@ -114,17 +111,21 @@ const HomeScreen = () => {
                   categoryFilter === category && styles.categoryBtnTextActive,
                 ]}
               >
-                {category === 'all' ? 'Todos' : 
-                 category === 'lanches' ? 'Lanches' :
-                 category === 'bebidas' ? 'Bebidas' :
-                 category === 'sobremesas' ? 'Sobremesas' : category}
+                {category === "all"
+                  ? "Todos"
+                  : category === "lanches"
+                  ? "Lanches"
+                  : category === "bebidas"
+                  ? "Bebidas"
+                  : category === "sobremesas"
+                  ? "Sobremesas"
+                  : category}
               </Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
       </View>
 
-      {/* Lista de Produtos */}
       <FlatList
         data={filteredProducts}
         renderItem={renderProduct}
@@ -140,7 +141,6 @@ const HomeScreen = () => {
         )}
       />
 
-      {/* Modal do Produto */}
       <ModalProduct
         visible={!!selectedProduct}
         product={selectedProduct}

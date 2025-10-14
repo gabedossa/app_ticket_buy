@@ -88,4 +88,12 @@ export const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: Colors.secondary, 
   },
+  headerSide: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButton: {
+    padding: 5,
+  },
 });
