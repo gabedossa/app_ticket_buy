@@ -1,7 +1,5 @@
 import React from "react";
 import { Image, Modal, Text, TouchableOpacity, View } from "react-native";
-
-import { useCart } from "../../context/CartContext";
 import { Product } from "../../types";
 import { styles } from "../ModalProduct/ModalProductStyle";
 
@@ -9,27 +7,23 @@ interface ModalProductProps {
   visible: boolean;
   product: Product | null;
   onClose: () => void;
+  onAddToCart: (product: Product) => void;
 }
 
 const ModalProduct: React.FC<ModalProductProps> = ({
   visible,
   product,
   onClose,
+  onAddToCart,
 }) => {
-  const { addToCart } = useCart();
-
-  // DEBUG
-  console.log("🟣 ModalProduct - visible:", visible);
-  console.log("🟣 ModalProduct - product:", product?.name);
 
   const handleAddToCart = () => {
     if (!product) return;
-    addToCart(product);
+    onAddToCart(product);
     onClose();
   };
 
   if (!product) {
-    console.log("⚫ ModalProduct - sem produto, retornando null");
     return null;
   }
 
@@ -50,6 +44,7 @@ const ModalProduct: React.FC<ModalProductProps> = ({
           style={styles.modalContent}
           onPress={(e) => e.stopPropagation()}
         >
+          {/* O resto do seu JSX continua exatamente o mesmo... */}
           <Image
             source={{
               uri:
@@ -58,17 +53,14 @@ const ModalProduct: React.FC<ModalProductProps> = ({
             }}
             style={styles.modalImage}
           />
-
           <View style={styles.modalBody}>
             <Text style={styles.modalTitle}>{product.name}</Text>
             <Text style={styles.modalDescription}>{product.description}</Text>
           </View>
-
           <View style={styles.modalFooter}>
             <Text style={styles.modalPrice}>
               R$ {product.price?.toFixed(2) ?? "0.00"}
             </Text>
-
             <View style={styles.modalButtonContainer}>
               <TouchableOpacity
                 style={styles.modalButton}
@@ -78,7 +70,6 @@ const ModalProduct: React.FC<ModalProductProps> = ({
               </TouchableOpacity>
             </View>
           </View>
-
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeButtonText}>×</Text>
           </TouchableOpacity>

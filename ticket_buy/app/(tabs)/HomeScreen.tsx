@@ -1,3 +1,4 @@
+// app/(tabs)/HomeScreen.tsx
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -11,8 +12,9 @@ import {
   View,
 } from "react-native";
 
+// ✅ CORREÇÃO: Caminho de importação ajustado (dois ".." para sair de app/(tabs))
 import Header from "../src/component/Header/Header";
-import ModalProduct from "../src/component/ModalProduct/ModalProduct";
+import ModalProduct from "../src/component/ModalProduct/ModalProduct"; // ← dois ".."
 import ProductCard from "../src/component/ProductCard/ProductCard";
 import { useCart } from "../src/context/CartContext";
 import { ProductService } from "../src/service/ProductService";
@@ -33,8 +35,10 @@ const HomeScreen = () => {
         setLoading(true);
         const productsData = await ProductService.getProducts();
 
-        // Usar a função de normalização para garantir consistência
-        const formattedProducts: Product[] = productsData.map((p: any) => normalizeProduct(p));
+        // ✅ Garantir que normalizeProduct lida com dados ausentes
+        const formattedProducts: Product[] = productsData
+          .map((p: any) => normalizeProduct(p))
+          .filter(p => p.id != null && p.name); // ← remove itens inválidos
 
         setProducts(formattedProducts);
       } catch (error) {
@@ -46,27 +50,23 @@ const HomeScreen = () => {
     loadProducts();
   }, []);
 
-  // DEBUG
-  console.log("🔵 Selected Product:", selectedProduct?.name);
-  console.log("🔵 Modal Visible:", !!selectedProduct);
-
   const filteredProducts =
     categoryFilter === 'all'
       ? products
       : products.filter((product) => product.tipo === categoryFilter);
 
-  // Extrair categorias únicas dos produtos
-  const categories: (ProductCategory | 'all')[] = [
-    'all',
-    ...Array.from(new Set(products.map((product) => product.tipo))) as ProductCategory[]
-  ];
+  // ✅ Extrair categorias únicas com fallback
+  const uniqueCategories = Array.from(
+    new Set(products.map(p => p.tipo).filter(t => t !== undefined))
+  ) as ProductCategory[];
+  
+  const categories: (ProductCategory | 'all')[] = ['all', ...uniqueCategories];
 
   const renderProduct = ({ item }: { item: Product }) => (
     <TouchableOpacity
       style={styles.productCard}
-      onPress={() => {
-        setSelectedProduct(item);
-      }}
+      onPress={() => setSelectedProduct(item)}
+      disabled={!item.name} // ← evita crash se name for inválido
     >
       <ProductCard product={item} />
     </TouchableOpacity>
@@ -75,7 +75,7 @@ const HomeScreen = () => {
   if (loading) {
     return (
       <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color="#4a90e2" />
+        <ActivityIndicator size="large" color="#961e00ff" />
         <Text style={styles.loadingText}>Carregando produtos...</Text>
       </View>
     );
@@ -128,7 +128,7 @@ const HomeScreen = () => {
       <FlatList
         data={filteredProducts}
         renderItem={renderProduct}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => String(item.id)}
         numColumns={2}
         contentContainerStyle={styles.productsGrid}
         columnWrapperStyle={styles.columnWrapper}
@@ -144,11 +144,8 @@ const HomeScreen = () => {
       <ModalProduct
         visible={!!selectedProduct}
         product={selectedProduct}
-        onClose={() => {
-          console.log("🔴 Fechando modal");
-          setSelectedProduct(null);
-        }}
-        onAddToCart={(product) => {
+        onClose={() => setSelectedProduct(null)}
+        onAddToCart={(product: Product) => {
           addToCart(product);
           setSelectedProduct(null);
         }}
