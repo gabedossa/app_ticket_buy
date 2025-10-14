@@ -16,13 +16,13 @@ import ModalProduct from "../src/component/modalProduct/ModalProduct";
 import ProductCard from "../src/component/ProductCard/ProductCard";
 import { useCart } from "../src/context/CartContext";
 import { ProductService } from "../src/service/ProductService";
-import { Product } from "../src/types";
+import { Product, ProductCategory, normalizeProduct } from "../src/types";
 
 const HomeScreen = () => {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState<ProductCategory | 'all'>('all');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const { addToCart, itemCount } = useCart();
@@ -33,14 +33,8 @@ const HomeScreen = () => {
         setLoading(true);
         const productsData = await ProductService.getProducts();
 
-        const formattedProducts: Product[] = productsData.map((p: any) => ({
-          id: p.idProduto,
-          name: p.home || p.nome,
-          price: p.preco,
-          category: p.tipo,
-          description: p.descricao || `Delicioso ${p.nome || "produto"}...`,
-          images: p.imagens,
-        }));
+        // Usar a função de normalização para garantir consistência
+        const formattedProducts: Product[] = productsData.map((p: any) => normalizeProduct(p));
 
         setProducts(formattedProducts);
       } catch (error) {
@@ -57,13 +51,14 @@ const HomeScreen = () => {
   console.log("🔵 Modal Visible:", !!selectedProduct);
 
   const filteredProducts =
-    categoryFilter === "all"
+    categoryFilter === 'all'
       ? products
-      : products.filter((product) => product.category === categoryFilter);
+      : products.filter((product) => product.tipo === categoryFilter);
 
-  const categories = [
-    "all",
-    ...new Set(products.map((product) => product.category)),
+  // Extrair categorias únicas dos produtos
+  const categories: (ProductCategory | 'all')[] = [
+    'all',
+    ...Array.from(new Set(products.map((product) => product.tipo))) as ProductCategory[]
   ];
 
   const renderProduct = ({ item }: { item: Product }) => (
@@ -93,6 +88,8 @@ const HomeScreen = () => {
         title="Ticketeria"
         showAdminButton={true}
         showCartButton={true}
+        onAdminPress={() => router.push('/admin')}
+        onCartPress={() => router.push('/cart')}
       />
 
       {/* Filtros de Categoria */}
@@ -117,7 +114,10 @@ const HomeScreen = () => {
                   categoryFilter === category && styles.categoryBtnTextActive,
                 ]}
               >
-                {category === "all" ? "Todos" : category}
+                {category === 'all' ? 'Todos' : 
+                 category === 'lanches' ? 'Lanches' :
+                 category === 'bebidas' ? 'Bebidas' :
+                 category === 'sobremesas' ? 'Sobremesas' : category}
               </Text>
             </TouchableOpacity>
           ))}
@@ -148,6 +148,10 @@ const HomeScreen = () => {
           console.log("🔴 Fechando modal");
           setSelectedProduct(null);
         }}
+        onAddToCart={(product) => {
+          addToCart(product);
+          setSelectedProduct(null);
+        }}
       />
     </SafeAreaView>
   );
@@ -161,6 +165,8 @@ const styles = StyleSheet.create({
   categoriesSection: {
     backgroundColor: "white",
     paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
   },
   categories: {
     paddingHorizontal: 16,
@@ -179,6 +185,7 @@ const styles = StyleSheet.create({
     color: "#333",
     fontWeight: "500",
     fontSize: 14,
+    textTransform: "capitalize",
   },
   categoryBtnTextActive: {
     color: "white",

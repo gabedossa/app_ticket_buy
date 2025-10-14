@@ -1,7 +1,6 @@
 // app/(tabs)/admin.tsx
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -13,365 +12,415 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 import Header from '../src/component/Header/Header';
 import { ProductService } from '../src/service/ProductService';
-
-// Tipos
-type ProductCategory = 'lanches' | 'bebidas' | 'sobremesas';
-
-interface Product {
-  [x: string]: any;
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  category: ProductCategory;
-  isAvailable: boolean;
-}
+import { Product, ProductCategory } from '../src/types';
 
 const AdminScreen = () => {
-  const router = useRouter();
-  
-  // Estados para produtos
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  
-  // Estados para formulário
   const [showProductModal, setShowProductModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+  // Form state
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<ProductCategory>('lanches');
   const [image, setImage] = useState('');
-  
-  // Estados para filtros
+
+  // Filter and search state
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | 'todos'>('todos');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const categories: (ProductCategory | 'todos')[] = ['todos', 'lanches', 'bebidas', 'sobremesas'];
 
-  // Carregar produtos
-   useEffect(() => {
-      loadProducts();
-    }, []);
-    
-
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
     try {
-      setLoading(true);
-        setLoading(true);
-        const productsData = await ProductService.getProducts();
-        const productsWithDesc = productsData.map((p: any) => ({
-          ...p,
-          descricao:
-            p.descricao ||
-            `Delicioso ${
-              p.nome || "produto"
-            } feito com os melhores ingredientes.`,
-        }));
-        setProducts(productsWithDesc);
-  
+      const productsData = await ProductService.getProducts();
+      // Mapeamento defensivo para normalizar os dados da API
+      const normalizedProducts = productsData.map((p: any) => ({
+        id: p.id_produto || p.idProduto || p.id,
+        name: p.nome || p.name,
+        description: p.descricao || p.description || 'Sem descrição.',
+        price: parseFloat(p.preco || p.price || 0),
+        images: p.imagem || p.image ? [p.imagem || p.image] : [],
+        tipo: (p.tipo || p.categoria || 'lanches') as ProductCategory,
+        disponivel: p.disponivel !== undefined ? p.disponivel : true,
+      }));
+      setProducts(normalizedProducts);
     } catch (error) {
-      console.error('Erro ao carregar produtos:', error);
-      Alert.alert('Erro', 'Não foi possível carregar os produtos');
+      Alert.alert('Erro Crítico', 'Não foi possível carregar os produtos. Verifique a conexão com a API.');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, []);
 
-  const onRefresh = async () => {
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
+
+  const onRefresh = () => {
     setRefreshing(true);
-    await loadProducts();
-    setRefreshing(false);
+    loadProducts();
   };
-
-  // Filtrar produtos
+  
   const filteredProducts = products.filter(product => {
-    const matchesCategory = selectedCategory === 'todos' || product.category === selectedCategory;
-    const matchesSearch = product.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         product.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'todos' || product.tipo === selectedCategory;
+    const matchesSearch =
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
-  const categories: (ProductCategory | 'todos')[] = ['todos', 'lanches', 'bebidas', 'sobremesas'];
-
-  // Funções do CRUD
-  const handleAddProduct = () => {
-    if (!name || !price || !description) {
-      Alert.alert('Erro', 'Preencha todos os campos obrigatórios');
-      return;
-    }
-
-    const newProduct: Product = {
-      id: Date.now().toString(),
-      name,
-      description,
-      price: parseFloat(price),
-      image: image || 'https://via.placeholder.com/300x200?text=Produto',
-      category,
-      isAvailable: true
-    };
-
-    setProducts(prev => [...prev, newProduct]);
-    resetForm();
-    setShowProductModal(false);
-    Alert.alert('Sucesso', 'Produto adicionado com sucesso!');
-  };
-
-  const handleEditProduct = (product: Product) => {
-    setEditingProduct(product);
-    setName(product.name);
-    setPrice(product.price.toString());
-    setDescription(product.description);
-    setCategory(product.category);
-    setImage(product.image);
-    setShowProductModal(true);
-  };
-
-  const handleUpdateProduct = () => {
-    if (!editingProduct || !name || !price || !description) {
-      Alert.alert('Erro', 'Preencha todos os campos obrigatórios');
-      return;
-    }
-
-    setProducts(prev =>
-      prev.map(product =>
-        product.id === editingProduct.id
-          ? {
-              ...product,
-              name,
-              description,
-              price: parseFloat(price),
-              category,
-              image: image || product.image
-            }
-          : product
-      )
-    );
-
-    resetForm();
-    setShowProductModal(false);
-    Alert.alert('Sucesso', 'Produto atualizado com sucesso!');
-  };
-
-  const handleDeleteProduct = (productId: string) => {
-    Alert.alert(
-      'Confirmar Exclusão',
-      'Tem certeza que deseja excluir este produto?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: () => {
-            setProducts(prev => prev.filter(product => product.id !== productId));
-            Alert.alert('Sucesso', 'Produto excluído com sucesso!');
-          }
-        }
-      ]
-    );
-  };
-
-  const toggleAvailability = (productId: string) => {
-    setProducts(prev =>
-      prev.map(product =>
-        product.id === productId
-          ? { ...product, isAvailable: !product.isAvailable }
-          : product
-      )
-    );
-  };
-
   const resetForm = () => {
+    setEditingProduct(null);
     setName('');
     setPrice('');
     setDescription('');
     setCategory('lanches');
     setImage('');
-    setEditingProduct(null);
   };
 
-  const ProductCard = ({ product }: { product: Product }) => (
-    <View style={[styles.card, !product.isAvailable && styles.disabledCard]}>
-      <Image source={{ uri: product.image }} style={styles.productImage} />
+  const handleOpenModalForEdit = (product: Product) => {
+    setEditingProduct(product);
+    setName(product.name);
+    setPrice(String(product.price));
+    setDescription(product.description);
+    setCategory(product.tipo);
+    setImage(product.images?.[0] || '');
+    setShowProductModal(true);
+  };
+  
+  const handleOpenModalForCreate = () => {
+    resetForm();
+    setShowProductModal(true);
+  };
+  
+  const handleSubmit = async () => {
+    if (!name || !price || !description) {
+      Alert.alert('Campos Obrigatórios', 'Por favor, preencha nome, preço e descrição.');
+      return;
+    }
+    const parsedPrice = parseFloat(price.replace(',', '.'));
+    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+      Alert.alert('Preço Inválido', 'O preço deve ser um número maior que zero.');
+      return;
+    }
+
+    const productData = {
+      nome: name.trim(),
+      descricao: description.trim(),
+      preco: parsedPrice,
+      tipo: category,
+      imagem: image.trim() || 'https://via.placeholder.com/300x200?text=Produto',
+      disponivel: editingProduct ? editingProduct.disponivel : true,
+    };
+
+    const action = editingProduct ? 'atualizar' : 'criar';
+    try {
+      if (editingProduct) {
+        await ProductService.updateProduct(editingProduct.id, productData);
+      } else {
+        await ProductService.createProduct(productData);
+      }
       
-      <View style={styles.productInfo}>
-        <View style={styles.productHeader}>
-          <Text style={styles.productName} numberOfLines={1}>{product.nome}</Text>
-          <View style={[
-            styles.availabilityBadge,
-            product.isAvailable ? styles.available : styles.unavailable
-          ]}>
-            <Text style={styles.availabilityText}>
-              {product.isAvailable ? 'Disponível' : 'Indisponível'}
-            </Text>
-          </View>
-        </View>
+      Alert.alert('Sucesso!', `Produto ${action === 'atualizar' ? 'atualizado' : 'criado'} com sucesso.`);
+      setShowProductModal(false);
+      await loadProducts(); // Recarrega a lista para refletir as mudanças
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || `Ocorreu um erro ao ${action} o produto.`;
+      Alert.alert(`Erro ao ${action}`, errorMessage);
+    }
+  };
 
-        <Text style={styles.productDescription} numberOfLines={2}>
-          {product.descricao}
-        </Text>
+  const handleDeleteProduct = (productId: string | number) => {
+    console.log('🔴 DELETE - Iniciando deleção para produto ID:', productId);
+    console.log('🔴 DELETE - Tipo do ID:', typeof productId);
+    
+    Alert.alert(
+      'Confirmar Exclusão',
+      'Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+          onPress: () => console.log('❌ DELETE - Exclusão cancelada pelo usuário')
+        },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              console.log('🔄 DELETE - Chamando ProductService.deleteProduct...');
+              
+              const productToDelete = products.find(p => p.id === productId);
+              console.log('🔍 DELETE - Produto encontrado:', productToDelete);
+              
+              if (!productToDelete) {
+                Alert.alert('Erro', 'Produto não encontrado na lista.');
+                return;
+              }
+              
+              await ProductService.deleteProduct(productId);
+              console.log('✅ DELETE - Produto excluído com sucesso na API');
+              
+              console.log('🔄 DELETE - Atualizando lista local...');
+              setProducts(currentProducts => {
+                const newProducts = currentProducts.filter(p => {
+                  const shouldKeep = p.id !== productId;
+                  if (!shouldKeep) {
+                    console.log('🗑️ DELETE - Removendo produto:', p.name);
+                  }
+                  return shouldKeep;
+                });
+                console.log(`📊 DELETE - Lista atualizada: ${newProducts.length} produtos`);
+                return newProducts;
+              });
+              
+              Alert.alert('Sucesso!', 'Produto excluído com sucesso.');
+              
+            } catch (error: any) {
+              console.error('🚨 DELETE - Erro na exclusão:', error);
+              
+              let errorMessage = 'Não foi possível excluir o produto.';
+              
+              if (error.response) {
+                console.error('📊 DELETE - Detalhes do erro:', {
+                  status: error.response.status,
+                  data: error.response.data,
+                  headers: error.response.headers
+                });
+                
+                if (error.response.status === 404) {
+                  errorMessage = 'Produto não encontrado no servidor.';
+                } else if (error.response.status === 500) {
+                  errorMessage = 'Erro interno do servidor.';
+                } else {
+                  errorMessage = error.response.data?.message || `Erro ${error.response.status}`;
+                }
+              } else if (error.request) {
+                errorMessage = 'Sem resposta do servidor. Verifique sua conexão.';
+              } else {
+                errorMessage = error.message || 'Erro inesperado';
+              }
+              
+              Alert.alert('Erro na Exclusão', errorMessage);
+            }
+          }
+        },
+      ]
+    );
+  };
 
-        <View style={styles.productDetails}>
-          <Text style={styles.productPrice}>R$ {product.preco.toFixed(2)}</Text>
-          <Text style={styles.productCategory}>{product.categoria}</Text>
-        </View>
-
-        <View style={styles.actions}>
-          <TouchableOpacity 
-            style={[styles.actionButton, styles.editButton]}
-            onPress={() => handleEditProduct(product)}
-          >
-            <Ionicons name="pencil" size={16} color="#fff" />
-            <Text style={styles.actionText}>Editar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.actionButton, styles.deleteButton]}
-            onPress={() => handleDeleteProduct(product.id)}
-          >
-            <Ionicons name="trash" size={16} color="#fff" />
-            <Text style={styles.actionText}>Excluir</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
+  const toggleAvailability = async (product: Product) => {
+    const newAvailability = !product.disponivel;
+    try {
+      await ProductService.toggleProductAvailability(product.id, newAvailability);
+      setProducts(currentProducts =>
+        currentProducts.map(p => (p.id === product.id ? { ...p, disponivel: newAvailability } : p))
+      );
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Não foi possível alterar a disponibilidade.';
+      Alert.alert('Erro', errorMessage);
+      await loadProducts();
+    }
+  };
 
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <Text>Carregando produtos...</Text>
+        <Text>Carregando...</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <Header/>
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false}
-        style={styles.categoriesContainer}
-      >
-        {categories.map(cat => (
-          <TouchableOpacity
-            key={cat}
-            style={[
-              styles.categoryButton,
-              selectedCategory === cat && styles.categoryButtonActive
-            ]}
-            onPress={() => setSelectedCategory(cat)}
-          >
-            <Text style={[
-              styles.categoryText,
-              selectedCategory === cat && styles.categoryTextActive
-            ]}>
-              {cat === 'todos' ? 'Todos' : cat}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      <Header />
+      
+      <View style={styles.controlsContainer}>
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color="#64748b" style={styles.searchIcon} />
+          <TextInput 
+            style={styles.searchInput} 
+            placeholder="Buscar produtos..." 
+            value={searchQuery} 
+            onChangeText={setSearchQuery} 
+          />
+        </View>
+        <TouchableOpacity style={styles.addProductButton} onPress={handleOpenModalForCreate}>
+          <Ionicons name="add" size={20} color="#fff" />
+          <Text style={styles.addProductButtonText}>Novo Produto</Text>
+        </TouchableOpacity>
+      </View>
 
-      {/* Lista de Produtos */}
+      <View>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          contentContainerStyle={styles.categoriesContainer}
+        >
+          {categories.map(cat => (
+            <TouchableOpacity 
+              key={cat} 
+              style={[
+                styles.categoryButton, 
+                selectedCategory === cat && styles.categoryButtonActive
+              ]} 
+              onPress={() => setSelectedCategory(cat)}
+            >
+              <Text style={[
+                styles.categoryText, 
+                selectedCategory === cat && styles.categoryTextActive
+              ]}>
+                {cat}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
       <FlatList
         data={filteredProducts}
-        renderItem={({ item }) => <ProductCard product={item} />}
-        keyExtractor={item => item.idProduto}
+        keyExtractor={item => String(item.id)}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh} 
+          />
         }
         contentContainerStyle={styles.productsList}
+        renderItem={({ item: product }) => (
+          <View style={[
+            styles.card, 
+            !product.disponivel && styles.disabledCard
+          ]}>
+            <Image 
+              source={{ uri: product.images?.[0] || 'https://via.placeholder.com/150' }} 
+              style={styles.productImage} 
+            />
+            <View style={styles.productInfo}>
+              <View>
+                <View style={styles.productHeader}>
+                  <Text style={styles.productName} numberOfLines={1}>
+                    {product.name}
+                  </Text>
+                  <View style={[
+                    styles.availabilityBadge, 
+                    product.disponivel ? styles.available : styles.unavailable
+                  ]}>
+                    <Text style={styles.availabilityText}>
+                      {product.disponivel ? 'Disponível' : 'Oculto'}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.productDescription} numberOfLines={2}>
+                  {product.description}
+                </Text>
+              </View>
+              <View style={styles.footer}>
+                <Text style={styles.productPrice}>
+                  R$ {product.price.toFixed(2).replace('.', ',')}
+                </Text>
+                <View style={styles.actions}>
+                  <TouchableOpacity 
+                    style={styles.iconButton} 
+                    onPress={() => handleOpenModalForEdit(product)}
+                  >
+                    <Ionicons name="pencil" size={20} color="#3b82f6" />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.iconButton} 
+                    onPress={() => toggleAvailability(product)}
+                  >
+                    <Ionicons 
+                      name={product.disponivel ? 'eye-off' : 'eye'} 
+                      size={20} 
+                      color="#f59e0b" 
+                    />
+                  </TouchableOpacity>
+                  {/* BOTÃO DE DELETAR - VERSÃO COM DEBUG */}
+                  {console.log("Pegou id do produto" + product.id)}
+                  <TouchableOpacity 
+                    style={styles.iconButton} 
+                    onPress={() => handleDeleteProduct(product.id)}
+                  >
+                    <Ionicons name="trash" size={20} color="#ef4444" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
         ListEmptyComponent={() => (
           <View style={styles.emptyContainer}>
-            <Ionicons name="fast-food-outline" size={64} color="#ccc" />
-            <Text style={styles.emptyText}>
-              {searchQuery 
-                ? 'Nenhum produto encontrado'
-                : selectedCategory === 'todos' 
-                  ? 'Nenhum produto cadastrado'
-                  : `Nenhum produto em ${selectedCategory}`
-              }
-            </Text>
-            <TouchableOpacity 
-              style={styles.emptyButton}
-              onPress={() => setShowProductModal(true)}
-            >
-              <Text style={styles.emptyButtonText}>Adicionar Produto</Text>
-            </TouchableOpacity>
+            <Ionicons name="fast-food-outline" size={64} color="#cbd5e1" />
+            <Text style={styles.emptyText}>Nenhum produto encontrado.</Text>
           </View>
         )}
       />
 
-      {/* Modal para Adicionar/Editar Produto */}
-      <Modal
-        visible={showProductModal}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => {
-          setShowProductModal(false);
-          resetForm();
-        }}
+      <Modal 
+        visible={showProductModal} 
+        animationType="slide" 
+        presentationStyle="pageSheet" 
+        onRequestClose={() => setShowProductModal(false)}
       >
-        <View style={styles.modalContainer}>
+        <View style={styles.modalView}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>
               {editingProduct ? 'Editar Produto' : 'Novo Produto'}
             </Text>
-            <TouchableOpacity 
-              onPress={() => {
-                setShowProductModal(false);
-                resetForm();
-              }}
-            >
-              <Ionicons name="close" size={24} color="#666" />
+            <TouchableOpacity onPress={() => setShowProductModal(false)}>
+              <Ionicons name="close" size={28} color="#64748b" />
             </TouchableOpacity>
           </View>
-
-          <ScrollView style={styles.form}>
-            <Text style={styles.label}>Nome do Produto *</Text>
-            <TextInput
-              style={styles.input}
-              value={name}
-              onChangeText={setName}
-              placeholder="Ex: Hambúrguer Especial"
+          <ScrollView contentContainerStyle={styles.formContainer}>
+            <Text style={styles.label}>Nome</Text>
+            <TextInput 
+              style={styles.input} 
+              value={name} 
+              onChangeText={setName} 
+              placeholder="Digite o nome do produto"
             />
-
-            <Text style={styles.label}>Preço *</Text>
-            <TextInput
-              style={styles.input}
-              value={price}
-              onChangeText={setPrice}
-              placeholder="Ex: 24.90"
+            
+            <Text style={styles.label}>Preço</Text>
+            <TextInput 
+              style={styles.input} 
+              value={price} 
+              onChangeText={setPrice} 
               keyboardType="decimal-pad"
+              placeholder="0.00"
             />
-
-            <Text style={styles.label}>Descrição *</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Descreva o produto..."
-              multiline
-              numberOfLines={3}
+            
+            <Text style={styles.label}>Descrição</Text>
+            <TextInput 
+              style={[styles.input, styles.textArea]} 
+              value={description} 
+              onChangeText={setDescription} 
+              multiline 
+              numberOfLines={4}
+              placeholder="Descreva o produto"
             />
-
-            <Text style={styles.label}>Categoria *</Text>
+            
+            <Text style={styles.label}>Categoria</Text>
             <View style={styles.categoryOptions}>
               {(['lanches', 'bebidas', 'sobremesas'] as ProductCategory[]).map(cat => (
-                <TouchableOpacity
-                  key={cat}
+                <TouchableOpacity 
+                  key={cat} 
                   style={[
-                    styles.categoryOption,
+                    styles.categoryOption, 
                     category === cat && styles.categoryOptionActive
-                  ]}
+                  ]} 
                   onPress={() => setCategory(cat)}
                 >
                   <Text style={[
-                    styles.categoryOptionText,
+                    styles.categoryOptionText, 
                     category === cat && styles.categoryOptionTextActive
                   ]}>
                     {cat}
@@ -379,36 +428,32 @@ const AdminScreen = () => {
                 </TouchableOpacity>
               ))}
             </View>
-
+            
             <Text style={styles.label}>URL da Imagem</Text>
-            <TextInput
-              style={styles.input}
-              value={image}
-              onChangeText={setImage}
+            <TextInput 
+              style={styles.input} 
+              value={image} 
+              onChangeText={setImage} 
               placeholder="https://exemplo.com/imagem.jpg"
             />
-
+            
             {image ? (
               <Image source={{ uri: image }} style={styles.imagePreview} />
             ) : null}
-
+            
             <View style={styles.modalActions}>
               <TouchableOpacity 
-                style={styles.cancelButton}
-                onPress={() => {
-                  setShowProductModal(false);
-                  resetForm();
-                }}
+                style={[styles.button, styles.cancelButton]} 
+                onPress={() => setShowProductModal(false)}
               >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
+                <Text style={styles.buttonText}>Cancelar</Text>
               </TouchableOpacity>
-
               <TouchableOpacity 
-                style={styles.saveButton}
-                onPress={editingProduct ? handleUpdateProduct : handleAddProduct}
+                style={[styles.button, styles.saveButton]} 
+                onPress={handleSubmit}
               >
-                <Text style={styles.saveButtonText}>
-                  {editingProduct ? 'Atualizar' : 'Salvar'}
+                <Text style={[styles.buttonText, { color: '#fff' }]}>
+                  {editingProduct ? 'Salvar Alterações' : 'Criar Produto'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -419,353 +464,259 @@ const AdminScreen = () => {
   );
 };
 
+// ... (seus estilos permanecem os mesmos)
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
+  container: { 
+    flex: 1, 
+    backgroundColor: '#f1f5f9' 
   },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  centerContainer: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-    backgroundColor: '#c23b01ff',
+  controlsContainer: { 
+    flexDirection: 'row', 
+    padding: 12, 
+    alignItems: 'center', 
+    gap: 10, 
+    backgroundColor: '#fff' 
   },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 8,
+  searchContainer: { 
+    flex: 1, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#f1f5f9', 
+    borderRadius: 8, 
+    paddingHorizontal: 10 
   },
-  backButtonText: {
-    color: '#fff',
-    marginLeft: 4,
-    fontSize: 16,
+  searchIcon: { 
+    marginRight: 8 
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
+  searchInput: { 
+    height: 44, 
+    flex: 1, 
+    fontSize: 16 
   },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    gap: 4,
+  addProductButton: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#1d4ed8', 
+    paddingHorizontal: 12, 
+    paddingVertical: 10, 
+    borderRadius: 8, 
+    gap: 6 
   },
-  addButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
+  addProductButtonText: { 
+    color: '#fff', 
+    fontWeight: '600', 
+    fontSize: 14 
   },
-  statsContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    margin: 16,
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+  categoriesContainer: { 
+    paddingHorizontal: 12, 
+    paddingVertical: 10, 
+    backgroundColor: '#fff', 
+    borderBottomWidth: 1, 
+    borderBottomColor: '#e2e8f0' 
   },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
+  categoryButton: { 
+    paddingHorizontal: 16, 
+    paddingVertical: 8, 
+    borderRadius: 20, 
+    backgroundColor: '#e2e8f0', 
+    marginRight: 8 
   },
-  statNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1e293b',
-    marginBottom: 4,
+  categoryButtonActive: { 
+    backgroundColor: '#1d4ed8' 
   },
-  statLabel: {
-    fontSize: 12,
-    color: '#64748b',
+  categoryText: { 
+    fontSize: 14, 
+    fontWeight: '500', 
+    color: '#334155', 
+    textTransform: 'capitalize' 
   },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
-    marginBottom: 12,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+  categoryTextActive: { 
+    color: '#fff' 
   },
-  searchIcon: {
-    marginRight: 8,
+  productsList: { 
+    paddingHorizontal: 12, 
+    paddingTop: 12 
   },
-  searchInput: {
-    flex: 1,
-    paddingVertical: 12,
-    fontSize: 16,
+  card: { 
+    backgroundColor: '#fff', 
+    borderRadius: 12, 
+    marginBottom: 12, 
+    flexDirection: 'row', 
+    overflow: 'hidden', 
+    borderWidth: 1, 
+    borderColor: '#e2e8f0' 
   },
-  categoriesContainer: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+  disabledCard: { 
+    opacity: 0.7 
   },
-  categoryButton: {
-    display:'flex',
-    alignItems:'center',
-    justifyContent:'center',
-    padding: 16,
-    borderRadius: 20,
-    backgroundColor: '#f1f5f9',
+  productImage: { 
+    width: 100, 
+    height: '100%', 
+    backgroundColor: '#f8fafc' 
   },
-  categoryButtonActive: {
-    backgroundColor: "#961e00ff",
-    marginBottom:32,
+  productInfo: { 
+    flex: 1, 
+    padding: 12, 
+    justifyContent: 'space-between' 
   },
-  categoryText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#64748b',
+  productHeader: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'flex-start', 
+    marginBottom: 6 
   },
-  categoryTextActive: {
-    color: '#fff',
+  productName: { 
+    fontSize: 16, 
+    fontWeight: 'bold', 
+    color: '#1e293b', 
+    flex: 1 
   },
-  productsList: {
-    padding: 16,
-    paddingBottom: 20,
+  availabilityBadge: { 
+    paddingHorizontal: 8, 
+    paddingVertical: 3, 
+    borderRadius: 12, 
+    marginLeft: 8 
   },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    marginVertical: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    flexDirection: 'row',
-    overflow: 'hidden',
+  available: { 
+    backgroundColor: '#dcfce7' 
   },
-  disabledCard: {
-    opacity: 0.6,
-    backgroundColor: '#f5f5f5',
+  unavailable: { 
+    backgroundColor: '#fee2e2' 
   },
-  productImage: {
-    width: 100,
-    height: 100,
+  availabilityText: { 
+    fontSize: 11, 
+    fontWeight: '600', 
+    color: '#16a34a' 
   },
-  productInfo: {
-    flex: 1,
-    padding: 12,
+  productDescription: { 
+    fontSize: 13, 
+    color: '#475569', 
+    marginBottom: 8 
   },
-  productHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 4,
+  footer: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center' 
   },
-  productName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    flex: 1,
-    marginRight: 8,
+  productPrice: { 
+    fontSize: 16, 
+    fontWeight: 'bold', 
+    color: '#1d4ed8' 
   },
-  availabilityBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+  actions: { 
+    flexDirection: 'row', 
+    gap: 8 
   },
-  available: {
-    backgroundColor: '#dcfce7',
+  iconButton: { 
+    padding: 6 
   },
-  unavailable: {
-    backgroundColor: '#fee2e2',
+  emptyContainer: { 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    paddingVertical: 80 
   },
-  availabilityText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#166534',
+  emptyText: { 
+    fontSize: 16, 
+    color: '#64748b', 
+    marginTop: 16 
   },
-  productDescription: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 8,
+  modalView: { 
+    flex: 1, 
+    backgroundColor: '#f8fafc' 
   },
-  productDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+  modalHeader: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    padding: 16, 
+    backgroundColor: '#fff', 
+    borderBottomWidth: 1, 
+    borderBottomColor: '#e2e8f0' 
   },
-  productPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2563eb',
+  modalTitle: { 
+    fontSize: 20, 
+    fontWeight: 'bold', 
+    color: '#1e293b' 
   },
-  productCategory: {
-    fontSize: 12,
-    color: '#888',
-    textTransform: 'capitalize',
-    backgroundColor: '#f3f4f6',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
+  formContainer: { 
+    padding: 16, 
+    paddingBottom: 40 
   },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 8,
+  label: { 
+    fontSize: 16, 
+    fontWeight: '500', 
+    color: '#374151', 
+    marginBottom: 8, 
+    marginTop: 12 
   },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-    gap: 4,
+  input: { 
+    borderWidth: 1, 
+    borderColor: '#d1d5db', 
+    borderRadius: 8, 
+    padding: 12, 
+    fontSize: 16, 
+    backgroundColor: '#fff' 
   },
-  editButton: {
-    backgroundColor: '#3b82f6',
+  textArea: { 
+    minHeight: 100, 
+    textAlignVertical: 'top' 
   },
-  toggleButton: {
-    backgroundColor: '#f59e0b',
+  categoryOptions: { 
+    flexDirection: 'row', 
+    gap: 8 
   },
-  deleteButton: {
-    backgroundColor: '#ef4444',
+  categoryOption: { 
+    flex: 1, 
+    padding: 12, 
+    borderRadius: 8, 
+    backgroundColor: '#e2e8f0', 
+    alignItems: 'center' 
   },
-  actionText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '600',
+  categoryOptionActive: { 
+    backgroundColor: '#1d4ed8' 
   },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 40,
+  categoryOptionText: { 
+    fontSize: 14, 
+    fontWeight: '500', 
+    color: '#334155', 
+    textTransform: 'capitalize' 
   },
-  emptyText: {
-    fontSize: 16,
-    color: '#64748b',
-    textAlign: 'center',
-    marginVertical: 16,
+  categoryOptionTextActive: { 
+    color: '#fff' 
   },
-  emptyButton: {
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
+  imagePreview: { 
+    width: '100%', 
+    height: 180, 
+    borderRadius: 8, 
+    marginTop: 16, 
+    backgroundColor: '#e2e8f0' 
   },
-  emptyButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+  modalActions: { 
+    flexDirection: 'row', 
+    gap: 12, 
+    marginTop: 24 
   },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#fff',
+  button: { 
+    flex: 1, 
+    padding: 14, 
+    borderRadius: 8, 
+    alignItems: 'center' 
   },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+  buttonText: { 
+    fontSize: 16, 
+    fontWeight: '600' 
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1e293b',
+  cancelButton: { 
+    backgroundColor: '#e2e8f0' 
   },
-  form: {
-    flex: 1,
-    padding: 16,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
-    marginTop: 16,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#fff',
-  },
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  categoryOptions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  categoryOption: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: '#f3f4f6',
-    alignItems: 'center',
-  },
-  categoryOptionActive: {
-    backgroundColor: '#2563eb',
-  },
-  categoryOptionText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#6b7280',
-  },
-  categoryOptionTextActive: {
-    color: '#fff',
-  },
-  imagePreview: {
-    width: '100%',
-    height: 200,
-    borderRadius: 8,
-    marginTop: 8,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 32,
-    marginBottom: 20,
-  },
-  cancelButton: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 8,
-    backgroundColor: '#f3f4f6',
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
-  saveButton: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 8,
-    backgroundColor: '#2563eb',
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+  saveButton: { 
+    backgroundColor: '#1d4ed8' 
   },
 });
 
