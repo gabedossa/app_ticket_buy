@@ -41,18 +41,20 @@ const AdminScreen = () => {
   const loadProducts = useCallback(async () => {
     try {
       const productsData = await ProductService.getProducts();
-      // Mapeamento defensivo para normalizar os dados da API
+      // Mapeamento DEFENSIVO: nunca permite campos obrigatórios como undefined
       const normalizedProducts = productsData.map((p: any) => ({
         id: p.id_produto || p.idProduto || p.id,
-        name: p.nome || p.name,
+        name: p.nome || p.name || 'Produto sem nome', // ✅ fallback obrigatório
         description: p.descricao || p.description || 'Sem descrição.',
-        price: parseFloat(p.preco || p.price || 0),
+        price: parseFloat(p.preco || p.price) || 0,
         images: p.imagem || p.image ? [p.imagem || p.image] : [],
         tipo: (p.tipo || p.categoria || 'lanches') as ProductCategory,
         disponivel: p.disponivel !== undefined ? p.disponivel : true,
-      }));
+      })).filter((p: any) => p.id != null); // ✅ remove itens sem ID
+
       setProducts(normalizedProducts);
     } catch (error) {
+      console.error('❌ Erro ao carregar produtos:', error);
       Alert.alert('Erro Crítico', 'Não foi possível carregar os produtos. Verifique a conexão com a API.');
     } finally {
       setLoading(false);
@@ -68,12 +70,18 @@ const AdminScreen = () => {
     setRefreshing(true);
     loadProducts();
   };
-  
+
+  // ✅ FILTRO SEGURO: evita erro com name undefined
   const filteredProducts = products.filter(product => {
     const matchesCategory = selectedCategory === 'todos' || product.tipo === selectedCategory;
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    if (searchQuery.trim() === '') return matchesCategory;
+
+    const productName = (product.name || '').toLowerCase();
+    const productDescription = (product.description || '').toLowerCase();
+    const query = searchQuery.toLowerCase();
+
+    const matchesSearch = productName.includes(query) || productDescription.includes(query);
     return matchesCategory && matchesSearch;
   });
 
@@ -88,10 +96,10 @@ const AdminScreen = () => {
 
   const handleOpenModalForEdit = (product: Product) => {
     setEditingProduct(product);
-    setName(product.name);
-    setPrice(String(product.price));
-    setDescription(product.description);
-    setCategory(product.tipo);
+    setName(product.name || '');
+    setPrice(String(product.price || ''));
+    setDescription(product.description || '');
+    setCategory(product.tipo || 'lanches');
     setImage(product.images?.[0] || '');
     setShowProductModal(true);
   };
@@ -102,7 +110,7 @@ const AdminScreen = () => {
   };
   
   const handleSubmit = async () => {
-    if (!name || !price || !description) {
+    if (!name.trim() || !price.trim() || !description.trim()) {
       Alert.alert('Campos Obrigatórios', 'Por favor, preencha nome, preço e descrição.');
       return;
     }
@@ -131,7 +139,7 @@ const AdminScreen = () => {
       
       Alert.alert('Sucesso!', `Produto ${action === 'atualizar' ? 'atualizado' : 'criado'} com sucesso.`);
       setShowProductModal(false);
-      await loadProducts(); // Recarrega a lista para refletir as mudanças
+      await loadProducts();
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || `Ocorreu um erro ao ${action} o produto.`;
       Alert.alert(`Erro ao ${action}`, errorMessage);
@@ -139,76 +147,32 @@ const AdminScreen = () => {
   };
 
   const handleDeleteProduct = (productId: string | number) => {
-    console.log('🔴 DELETE - Iniciando deleção para produto ID:', productId);
-    console.log('🔴 DELETE - Tipo do ID:', typeof productId);
-    
     Alert.alert(
       'Confirmar Exclusão',
       'Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.',
       [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-          onPress: () => console.log('❌ DELETE - Exclusão cancelada pelo usuário')
-        },
+        { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Excluir',
           style: 'destructive',
           onPress: async () => {
             try {
-              console.log('🔄 DELETE - Chamando ProductService.deleteProduct...');
-              
-              const productToDelete = products.find(p => p.id === productId);
-              console.log('🔍 DELETE - Produto encontrado:', productToDelete);
-              
-              if (!productToDelete) {
-                Alert.alert('Erro', 'Produto não encontrado na lista.');
-                return;
-              }
-              
               await ProductService.deleteProduct(productId);
-              console.log('✅ DELETE - Produto excluído com sucesso na API');
-              
-              console.log('🔄 DELETE - Atualizando lista local...');
-              setProducts(currentProducts => {
-                const newProducts = currentProducts.filter(p => {
-                  const shouldKeep = p.id !== productId;
-                  if (!shouldKeep) {
-                    console.log('🗑️ DELETE - Removendo produto:', p.name);
-                  }
-                  return shouldKeep;
-                });
-                console.log(`📊 DELETE - Lista atualizada: ${newProducts.length} produtos`);
-                return newProducts;
-              });
-              
+              setProducts(currentProducts => 
+                currentProducts.filter(p => p.id !== productId)
+              );
               Alert.alert('Sucesso!', 'Produto excluído com sucesso.');
-              
             } catch (error: any) {
-              console.error('🚨 DELETE - Erro na exclusão:', error);
-              
               let errorMessage = 'Não foi possível excluir o produto.';
-              
-              if (error.response) {
-                console.error('📊 DELETE - Detalhes do erro:', {
-                  status: error.response.status,
-                  data: error.response.data,
-                  headers: error.response.headers
-                });
-                
-                if (error.response.status === 404) {
-                  errorMessage = 'Produto não encontrado no servidor.';
-                } else if (error.response.status === 500) {
-                  errorMessage = 'Erro interno do servidor.';
-                } else {
-                  errorMessage = error.response.data?.message || `Erro ${error.response.status}`;
-                }
+              if (error.response?.status === 404) {
+                errorMessage = 'Produto não encontrado no servidor.';
+              } else if (error.response?.status === 500) {
+                errorMessage = 'Erro interno do servidor.';
+              } else if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
               } else if (error.request) {
                 errorMessage = 'Sem resposta do servidor. Verifique sua conexão.';
-              } else {
-                errorMessage = error.message || 'Erro inesperado';
               }
-              
               Alert.alert('Erro na Exclusão', errorMessage);
             }
           }
@@ -268,16 +232,10 @@ const AdminScreen = () => {
           {categories.map(cat => (
             <TouchableOpacity 
               key={cat} 
-              style={[
-                styles.categoryButton, 
-                selectedCategory === cat && styles.categoryButtonActive
-              ]} 
+              style={[styles.categoryButton, selectedCategory === cat && styles.categoryButtonActive]} 
               onPress={() => setSelectedCategory(cat)}
             >
-              <Text style={[
-                styles.categoryText, 
-                selectedCategory === cat && styles.categoryTextActive
-              ]}>
+              <Text style={[styles.categoryText, selectedCategory === cat && styles.categoryTextActive]}>
                 {cat}
               </Text>
             </TouchableOpacity>
@@ -288,18 +246,10 @@ const AdminScreen = () => {
       <FlatList
         data={filteredProducts}
         keyExtractor={item => String(item.id)}
-        refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
-            onRefresh={onRefresh} 
-          />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         contentContainerStyle={styles.productsList}
         renderItem={({ item: product }) => (
-          <View style={[
-            styles.card, 
-            !product.disponivel && styles.disabledCard
-          ]}>
+          <View style={[styles.card, !product.disponivel && styles.disabledCard]}>
             <Image 
               source={{ uri: product.images?.[0] || 'https://via.placeholder.com/150' }} 
               style={styles.productImage} 
@@ -310,10 +260,7 @@ const AdminScreen = () => {
                   <Text style={styles.productName} numberOfLines={1}>
                     {product.name}
                   </Text>
-                  <View style={[
-                    styles.availabilityBadge, 
-                    product.disponivel ? styles.available : styles.unavailable
-                  ]}>
+                  <View style={[styles.availabilityBadge, product.disponivel ? styles.available : styles.unavailable]}>
                     <Text style={styles.availabilityText}>
                       {product.disponivel ? 'Disponível' : 'Oculto'}
                     </Text>
@@ -344,8 +291,6 @@ const AdminScreen = () => {
                       color="#f59e0b" 
                     />
                   </TouchableOpacity>
-                  {/* BOTÃO DE DELETAR - VERSÃO COM DEBUG */}
-                  {console.log("Pegou id do produto" + product.id)}
                   <TouchableOpacity 
                     style={styles.iconButton} 
                     onPress={() => handleDeleteProduct(product.id)}
@@ -365,6 +310,7 @@ const AdminScreen = () => {
         )}
       />
 
+      {/* Modal de formulário */}
       <Modal 
         visible={showProductModal} 
         animationType="slide" 
@@ -413,16 +359,10 @@ const AdminScreen = () => {
               {(['lanches', 'bebidas', 'sobremesas'] as ProductCategory[]).map(cat => (
                 <TouchableOpacity 
                   key={cat} 
-                  style={[
-                    styles.categoryOption, 
-                    category === cat && styles.categoryOptionActive
-                  ]} 
+                  style={[styles.categoryOption, category === cat && styles.categoryOptionActive]} 
                   onPress={() => setCategory(cat)}
                 >
-                  <Text style={[
-                    styles.categoryOptionText, 
-                    category === cat && styles.categoryOptionTextActive
-                  ]}>
+                  <Text style={[styles.categoryOptionText, category === cat && styles.categoryOptionTextActive]}>
                     {cat}
                   </Text>
                 </TouchableOpacity>
@@ -463,8 +403,6 @@ const AdminScreen = () => {
     </View>
   );
 };
-
-// ... (seus estilos permanecem os mesmos)
 
 const styles = StyleSheet.create({
   container: { 

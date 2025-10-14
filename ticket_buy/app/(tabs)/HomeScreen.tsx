@@ -12,7 +12,7 @@ import {
 } from "react-native";
 
 import Header from "../src/component/Header/Header";
-import ModalProduct from "../src/component/modalProduct/ModalProduct";
+import ModalProduct from "../src/component/ModalProduct/ModalProduct";
 import ProductCard from "../src/component/ProductCard/ProductCard";
 import { useCart } from "../src/context/CartContext";
 import { ProductService } from "../src/service/ProductService";

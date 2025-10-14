@@ -3,7 +3,7 @@ import { Image, Modal, Text, TouchableOpacity, View } from "react-native";
 
 import { useCart } from "../../context/CartContext";
 import { Product } from "../../types";
-import { styles } from "./ModalProductStyle";
+import { styles } from "../ModalProduct/ModalProductStyle";
 
 interface ModalProductProps {
   visible: boolean;
