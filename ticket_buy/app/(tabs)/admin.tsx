@@ -147,6 +147,7 @@ const AdminScreen = () => {
   };
 
   const handleDeleteProduct = (productId: string | number) => {
+    console.log(productId.valueOf())
     Alert.alert(
       'Confirmar Exclusão',
       'Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.',
@@ -293,8 +294,7 @@ const AdminScreen = () => {
                   </TouchableOpacity>
                   <TouchableOpacity 
                     style={styles.iconButton} 
-                    onPress={() => handleDeleteProduct(product.id)}
-                  >
+                    onPress={() => handleDeleteProduct(product.id)}>
                     <Ionicons name="trash" size={20} color="#ef4444" />
                   </TouchableOpacity>
                 </View>

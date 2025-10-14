@@ -49,7 +49,6 @@ export const ProductService = {
     }
   },
 
-  // CORREÇÃO CRÍTICA: Garantir que sempre retorna uma Promise
   deleteProduct: async (id: string | number): Promise<{ success: boolean; message: string }> => {
     try {
       const response = await axios.delete(`${API_URL}/${id}`);
