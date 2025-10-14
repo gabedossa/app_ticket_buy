@@ -1,7 +1,7 @@
 import React from 'react';
 
 // --- Tipos Gerais ---
-export type ProductCategory = 'lanches' | 'bebidas' | 'sobremesas';
+export type ProductCategory = 'lanche' | 'bebida' | 'sobremesa';
 
 export interface Product {
   id: string | number;

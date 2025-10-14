@@ -113,11 +113,11 @@ const HomeScreen = () => {
               >
                 {category === "all"
                   ? "Todos"
-                  : category === "lanches"
+                  : category === "lanche"
                   ? "Lanches"
-                  : category === "bebidas"
+                  : category === "bebida"
                   ? "Bebidas"
-                  : category === "sobremesas"
+                  : category === "sobremesa"
                   ? "Sobremesas"
                   : category}
               </Text>

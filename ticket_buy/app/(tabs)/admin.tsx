@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import Header from '../src/component/Header/Header';
+import { Colors } from '../src/constants/Colors';
 import { ProductService } from '../src/service/ProductService';
 import { Product, ProductCategory } from '../src/types';
 
@@ -29,7 +30,7 @@ const AdminScreen = () => {
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<ProductCategory>('lanches');
+  const [category, setCategory] = useState<ProductCategory>('lanche');
   const [image, setImage] = useState('');
 
   // Filter and search state
@@ -39,9 +40,9 @@ const AdminScreen = () => {
 
   const categories: (ProductCategory | 'todos')[] = [
     'todos',
-    'lanches',
-    'bebidas',
-    'sobremesas',
+    'lanche',
+    'bebida',
+    'sobremesa',
   ];
 
   const loadProducts = useCallback(async () => {
@@ -100,7 +101,7 @@ const AdminScreen = () => {
     setName('');
     setPrice('');
     setDescription('');
-    setCategory('lanches');
+    setCategory('lanche');
     setImage('');
   };
 
@@ -422,7 +423,7 @@ const AdminScreen = () => {
 
             <Text style={styles.label}>Categoria</Text>
             <View style={styles.categoryOptions}>
-              {(['lanches', 'bebidas', 'sobremesas'] as ProductCategory[]).map(
+              {(['lanche', 'bebida', 'sobremesa'] as ProductCategory[]).map(
                 (cat) => (
                   <TouchableOpacity
                     key={cat}
@@ -516,7 +517,7 @@ const styles = StyleSheet.create({
   addProductButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1d4ed8',
+    backgroundColor: Colors.secondary,
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 8,
@@ -542,7 +543,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   categoryButtonActive: {
-    backgroundColor: '#1d4ed8',
+    backgroundColor: Colors.secondary,
   },
   categoryText: {
     fontSize: 14,
@@ -621,7 +622,7 @@ const styles = StyleSheet.create({
   productPrice: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1d4ed8',
+    color: Colors.secondary,
   },
   actions: {
     flexDirection: 'row',
@@ -689,11 +690,11 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
     borderRadius: 8,
-    backgroundColor: '#e2e8f0',
+    backgroundColor: Colors.lightGray,
     alignItems: 'center',
   },
   categoryOptionActive: {
-    backgroundColor: '#1d4ed8',
+    backgroundColor: Colors.secondary,
   },
   categoryOptionText: {
     fontSize: 14,
