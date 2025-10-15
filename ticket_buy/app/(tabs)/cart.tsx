@@ -13,6 +13,7 @@ import {
 import QRCode from "react-native-qrcode-svg";
 import Header from "../src/component/Header/Header";
 import Layout from "../src/component/layout";
+import { Colors } from "../src/constants/Colors";
 import { useCart } from "../src/context/CartContext";
 import { useOrders } from "../src/context/OrderContext";
 import { CartItem } from "../src/types";
@@ -246,7 +247,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f0f0",
   },
   itemInfo: {
-    flex: 1,
     marginRight: 10,
   },
   itemName: { fontSize: 16, fontWeight: "600", color: "#333" },
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#4a90e2",
+    backgroundColor: Colors.secondary,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
   totalText: { fontSize: 20, fontWeight: "bold", color: "#2c3e50" },
   itemsCount: { fontSize: 14, color: "#666" },
   checkoutButton: {
-    backgroundColor: "#2ecc71",
+    backgroundColor: Colors.secondary,
     padding: 16,
     borderRadius: 8,
     alignItems: "center",

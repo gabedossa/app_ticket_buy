@@ -5,18 +5,18 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
-@Table(name = "Produtos")
+@Table(name = "Pedido")
 public class Produto {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_produto")
+    @Column(name = "id_pedido")
     private Integer idProduto;
 
     private String nome;
     private BigDecimal preco;
     private String tipo;
 
-    @OneToMany(mappedBy = "produto", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ImagemProduto> imagens;
 
     // Getters e Setters
