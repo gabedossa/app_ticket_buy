@@ -3,6 +3,36 @@ import React from 'react';
 // --- Tipos Gerais ---
 export type ProductCategory = 'lanche' | 'bebida' | 'sobremesa';
 
+export interface LoginRequest {
+  email: string;
+  senha: string;
+}
+
+export interface RegisterRequest {
+  nome: string;
+  email: string;
+  senha: string;
+}
+
+export interface AuthResponse {
+  token: string;
+
+}
+
+export interface AuthState {
+  token: string | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  user: any;
+}
+
+export interface AuthContextType {
+  authState: AuthState;
+  signIn: (data: LoginRequest) => Promise<void>;
+  signOut: () => void;
+  signUp: (data: RegisterRequest) => Promise<void>;
+}
+
 export interface Product {
   id: string | number;
   name: string;

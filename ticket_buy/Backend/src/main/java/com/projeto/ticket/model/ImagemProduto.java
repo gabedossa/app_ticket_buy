@@ -10,11 +10,11 @@ public class ImagemProduto {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer idImagemProduto;
 
-    @Column(name = "url_imagem")
+    @Column(name = "url_imagem", length = 500)
     private String urlImagem;
 
-    @ManyToOne
-    @JoinColumn(name = "fk_produtos_id_produto", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "fk_Produtos_id_produto", nullable = false)
     private Produto produto;
 
     // Getters e Setters

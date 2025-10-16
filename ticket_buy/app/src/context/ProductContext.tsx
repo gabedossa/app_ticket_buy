@@ -1,99 +1,68 @@
-// src/context/ProductsContext.tsx
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { productService } from "../service/api";
-import { Product, ProviderProps } from "../types";
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { Product } from '../types'; // Certifique-se que o caminho para seus types está correto
 
-interface ProductsContextType {
+// PASSO 1: Importe APENAS o productService, usando chaves {}
+import { productService } from '../service/api';
+
+// Interface para definir o que o nosso contexto vai fornecer
+interface ProductContextType {
   products: Product[];
-  loading: boolean;
+  isLoading: boolean;
   error: string | null;
-  loadProducts: () => Promise<void>;
-  addProduct: (productData: Omit<Product, "id">) => Promise<void>;
-  retryCount: number;
-  isServerOnline: boolean;
+  loadProducts: () => Promise<void>; // Função para recarregar os produtos se necessário
 }
 
-const ProductsContext = createContext<ProductsContextType | undefined>(
-  undefined
-);
+// Criação do Contexto
+const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
-export const ProductsProvider: React.FC<ProviderProps> = ({ children }) => {
+// Componente Provedor (Provider)
+export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState<number>(0);
-  const [isServerOnline, setIsServerOnline] = useState<boolean>(false);
 
   const loadProducts = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       setError(null);
 
-      console.log("📡 Tentando conectar com o backend...");
-      const productsData = await productService.getProducts();
+      // PASSO 2: Chame o método diretamente do productService importado
+      const fetchedProducts = await productService.getProducts();
+      
+      setProducts(fetchedProducts);
 
-      // Se chegou aqui, o servidor está online
-      setIsServerOnline(true);
-
-      // Validar os dados recebidos
-      const validProducts = Array.isArray(productsData)
-        ? productsData.filter((p) => p && p.id && p.name && p.price)
-        : [];
-
-      setProducts(validProducts);
-      setRetryCount(0);
-
-      console.log(
-        `✅ Servidor online! ${validProducts.length} produtos carregados`
-      );
     } catch (err: any) {
-      setIsServerOnline(false);
-      const errorMessage = err.message || "Erro ao conectar com o servidor";
-      setError(errorMessage);
-      setProducts([]);
-      setRetryCount((prev) => prev + 1);
-      console.error("❌ Servidor offline:", err.message);
+      console.error("Erro ao carregar produtos:", err);
+      setError(err.message || 'Ocorreu um erro ao buscar os produtos.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const addProduct = async (productData: Omit<Product, "id">) => {
-    try {
-      const newProduct = await productService.createProduct(productData);
-      setProducts((prev) => [...prev, newProduct]);
-    } catch (err: any) {
-      const errorMessage = err.message || "Erro ao adicionar produto";
-      setError(errorMessage);
-      throw err;
-    }
-  };
-
+  // useEffect para carregar os produtos assim que o app iniciar
   useEffect(() => {
     loadProducts();
   }, []);
 
-  const contextValue: ProductsContextType = {
+  const value = {
     products,
-    loading,
+    isLoading,
     error,
     loadProducts,
-    addProduct,
-    retryCount,
-    isServerOnline,
   };
 
   return (
-    <ProductsContext.Provider value={contextValue}>
+    <ProductContext.Provider value={value}>
       {children}
-    </ProductsContext.Provider>
+    </ProductContext.Provider>
   );
 };
 
-export const useProducts = (): ProductsContextType => {
-  const context = useContext(ProductsContext);
-  if (!context) {
-    throw new Error("useProducts must be used within a ProductsProvider");
+// Hook customizado para facilitar o uso do contexto nas telas
+export const useProducts = () => {
+  const context = useContext(ProductContext);
+  if (context === undefined) {
+    throw new Error('useProducts deve ser usado dentro de um ProductsProvider');
   }
   return context;
 };

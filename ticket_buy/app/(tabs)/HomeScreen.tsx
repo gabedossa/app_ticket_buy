@@ -1,5 +1,5 @@
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router"; // <<-- 1. IMPORTAR useFocusEffect
+import React, { useCallback, useState } from "react"; // <<-- 2. IMPORTAR useCallback
 import {
   ActivityIndicator,
   FlatList,
@@ -14,8 +14,9 @@ import {
 import Header from "../src/component/Header/Header";
 import ModalProduct from "../src/component/ModalProduct/ModalProduct";
 import ProductCard from "../src/component/ProductCard/ProductCard";
+import { useAuth } from "../src/context/AuthContext";
 import { useCart } from "../src/context/CartContext";
-import { ProductService } from "../src/service/ProductService";
+import { productService } from "../src/service/api";
 import { Product, ProductCategory } from "../src/types";
 import { normalizeProduct } from "../src/util/ProductUtils";
 
@@ -29,26 +30,36 @@ const HomeScreen = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const { addToCart, itemCount } = useCart();
+  const { signOut } = useAuth();
 
-  useEffect(() => {
-    const loadProducts = async () => {
-      try {
-        setLoading(true);
-        const productsData = await ProductService.getProducts();
+  // ==================================================================
+  // >> CORREÇÃO PRINCIPAL AQUI <<
+  // Trocamos o useEffect por useFocusEffect para recarregar os dados
+  // toda vez que a tela ganhar foco.
+  // ==================================================================
+  useFocusEffect(
+    useCallback(() => {
+      const loadProducts = async () => {
+        try {
+          // Mantemos o loading aqui para dar feedback visual ao recarregar
+          setLoading(true); 
+          const productsData = await productService.getProducts();
 
-        const formattedProducts: Product[] = productsData
-          .map(normalizeProduct) // Agora a função é usada corretamente
-          .filter((p) => p.id != null && p.name);
+          const formattedProducts: Product[] = productsData
+            .map(normalizeProduct)
+            .filter((p) => p.id != null && p.name);
 
-        setProducts(formattedProducts);
-      } catch (error) {
-        console.error("Erro ao carregar produtos:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadProducts();
-  }, []);
+          setProducts(formattedProducts);
+        } catch (error) {
+          console.error("Erro ao carregar produtos:", error);
+          // Adicionar um Alert para o usuário seria uma boa prática
+        } finally {
+          setLoading(false);
+        }
+      };
+      loadProducts();
+    }, []) // O array vazio aqui é para o useCallback, não para o efeito em si.
+  );
 
   const filteredProducts =
     categoryFilter === "all"
@@ -113,16 +124,14 @@ const HomeScreen = () => {
               >
                 {category === "all"
                   ? "Todos"
-                  : category === "lanche"
-                  ? "Lanches"
-                  : category === "bebida"
-                  ? "Bebidas"
-                  : category === "sobremesa"
-                  ? "Sobremesas"
-                  : category}
+                  : category.charAt(0).toUpperCase() + category.slice(1)
+                }
               </Text>
             </TouchableOpacity>
           ))}
+          <TouchableOpacity style={styles.logoutButton} onPress={signOut}>
+            <Text style={styles.logoutButtonText}>Sair</Text>
+          </TouchableOpacity>
         </ScrollView>
       </View>
 
@@ -154,80 +163,94 @@ const HomeScreen = () => {
   );
 };
 
+// Seus estilos permanecem os mesmos
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f0f2f5",
-  },
-  categoriesSection: {
-    backgroundColor: "white",
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-  },
-  categories: {
-    paddingHorizontal: 16,
-  },
-  categoryBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: "#e0e0e0",
-    borderRadius: 20,
-    marginRight: 10,
-  },
-  categoryBtnActive: {
-    backgroundColor: "#961e00ff",
-  },
-  categoryBtnText: {
-    color: "#333",
-    fontWeight: "500",
-    fontSize: 14,
-    textTransform: "capitalize",
-  },
-  categoryBtnTextActive: {
-    color: "white",
-  },
-  productsGrid: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 20,
-  },
-  columnWrapper: {
-    gap: 12,
-  },
-  productCard: {
-    flex: 1,
-    backgroundColor: "white",
-    borderRadius: 12,
-    overflow: "hidden",
-    marginBottom: 12,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-  },
-  centerContent: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 60,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-  },
-  loadingText: {
-    marginTop: 16,
-    color: "#666",
-    fontSize: 16,
-  },
-});
+    container: {
+      flex: 1,
+      backgroundColor: "#f0f2f5",
+    },
+    categoriesSection: {
+      backgroundColor: "white",
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: "#e0e0e0",
+    },
+    categories: {
+      paddingHorizontal: 16,
+      alignItems: 'center',
+    },
+    categoryBtn: {
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+      backgroundColor: "#e0e0e0",
+      borderRadius: 20,
+      marginRight: 10,
+    },
+    categoryBtnActive: {
+      backgroundColor: "#961e00ff",
+    },
+    categoryBtnText: {
+      color: "#333",
+      fontWeight: "500",
+      fontSize: 14,
+      textTransform: "capitalize",
+    },
+    categoryBtnTextActive: {
+      color: "white",
+    },
+    productsGrid: {
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 20,
+    },
+    columnWrapper: {
+      gap: 12,
+    },
+    productCard: {
+      flex: 1,
+      backgroundColor: "white",
+      borderRadius: 12,
+      overflow: "hidden",
+      marginBottom: 12,
+      elevation: 2,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.2,
+      shadowRadius: 1.41,
+    },
+    centerContent: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingVertical: 60,
+    },
+    emptyText: {
+      fontSize: 16,
+      color: "#666",
+      textAlign: "center",
+    },
+    loadingText: {
+      marginTop: 16,
+      color: "#666",
+      fontSize: 16,
+    },
+    logoutButton: {
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+      backgroundColor: '#ff4d4d',
+      borderRadius: 20,
+      marginLeft: 10,
+    },
+    logoutButtonText: {
+      color: 'white',
+      fontWeight: 'bold',
+      fontSize: 14,
+    },
+  });
 
 export default HomeScreen;

@@ -28,10 +28,12 @@ public class PedidoService {
 
     public Pedido updatePedido(Integer id, Pedido pedidoDetails) {
         Pedido pedido = getPedidoById(id);
+
         pedido.setPrecoTotal(pedidoDetails.getPrecoTotal());
         pedido.setStatus(pedidoDetails.getStatus());
         pedido.setDataPedido(pedidoDetails.getDataPedido());
         pedido.setCliente(pedidoDetails.getCliente());
+
         return pedidoRepository.save(pedido);
     }
 
@@ -39,5 +41,4 @@ public class PedidoService {
         Pedido pedido = getPedidoById(id);
         pedidoRepository.delete(pedido);
     }
-
 }

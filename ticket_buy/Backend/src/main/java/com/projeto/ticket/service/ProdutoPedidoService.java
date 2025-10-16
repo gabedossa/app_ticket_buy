@@ -30,10 +30,11 @@ public class ProdutoPedidoService {
 
     public ProdutoPedido atualizar(ProdutoPedidoId id, ProdutoPedido produtoPedidoDetalhes) {
         ProdutoPedido item = buscarPorId(id);
-        item.setQntdProduto(produtoPedidoDetalhes.getQntdProduto());
+        item.setQuantidadeProduto(produtoPedidoDetalhes.getQuantidadeProduto());
         item.setPrecoUnidade(produtoPedidoDetalhes.getPrecoUnidade());
         item.setProduto(produtoPedidoDetalhes.getProduto());
         item.setPedido(produtoPedidoDetalhes.getPedido());
+
         return produtoPedidoRepository.save(item);
     }
 

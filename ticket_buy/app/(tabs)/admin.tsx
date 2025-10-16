@@ -16,8 +16,13 @@ import {
 } from 'react-native';
 import Header from '../src/component/Header/Header';
 import { Colors } from '../src/constants/Colors';
-import { ProductService } from '../src/service/ProductService';
+// ==================================================================
+// >> MUDANÇA IMPORTANTE AQUI <<
+// Importando o 'productService' correto do nosso arquivo central de API.
+// ==================================================================
+import { productService } from '../src/service/api';
 import { Product, ProductCategory } from '../src/types';
+import { normalizeProduct } from '../src/util/ProductUtils'; // Usaremos o normalizador
 
 const AdminScreen = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -47,25 +52,14 @@ const AdminScreen = () => {
 
   const loadProducts = useCallback(async () => {
     try {
-      const productsData = await ProductService.getProducts();
-      const normalizedProducts = productsData
-        .map((p: any) => ({
-          id: p.id_produto || p.idProduto || p.id,
-          name: p.nome || p.name || 'Produto sem nome',
-          description: p.descricao || p.description || 'Sem descrição.',
-          price: parseFloat(p.preco || p.price) || 0,
-          images: p.imagem || p.image ? [p.imagem || p.image] : [],
-          tipo: (p.tipo || p.categoria || 'lanches') as ProductCategory,
-          disponivel: p.disponivel !== undefined ? p.disponivel : true,
-        }))
-        .filter((p: any) => p.id != null);
+      // Usando o serviço correto
+      const productsData = await productService.getProducts();
+      // Usando o normalizador para garantir o formato correto dos dados
+      const normalizedProducts = productsData.map(normalizeProduct).filter((p) => p.id != null);
       setProducts(normalizedProducts);
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Erro ao carregar produtos:', error);
-      Alert.alert(
-        'Erro Crítico',
-        'Não foi possível carregar os produtos. Verifique a conexão com a API.'
-      );
+      Alert.alert('Erro', 'Não foi possível carregar os produtos: ' + error.message);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -84,15 +78,9 @@ const AdminScreen = () => {
   const filteredProducts = products.filter((product) => {
     const matchesCategory =
       selectedCategory === 'todos' || product.tipo === selectedCategory;
-
-    if (searchQuery.trim() === '') return matchesCategory;
-
-    const productName = (product.name || '').toLowerCase();
-    const productDescription = (product.description || '').toLowerCase();
     const query = searchQuery.toLowerCase();
-
-    const matchesSearch =
-      productName.includes(query) || productDescription.includes(query);
+    if (!query) return matchesCategory;
+    const matchesSearch = product.name.toLowerCase().includes(query);
     return matchesCategory && matchesSearch;
   });
 
@@ -107,10 +95,10 @@ const AdminScreen = () => {
 
   const handleOpenModalForEdit = (product: Product) => {
     setEditingProduct(product);
-    setName(product.name || '');
-    setPrice(String(product.price || ''));
-    setDescription(product.description || '');
-    setCategory(product.tipo || 'lanches');
+    setName(product.name);
+    setPrice(String(product.price));
+    setDescription(product.description);
+    setCategory(product.tipo);
     setImage(product.images?.[0] || '');
     setShowProductModal(true);
   };
@@ -121,16 +109,8 @@ const AdminScreen = () => {
   };
 
   const handleSubmit = async () => {
-    // ==================================================================
-    // >> LOG DE DEPURAÇÃO ADICIONADO AQUI <<
-    // ==================================================================
-    console.log('🚀 A função handleSubmit foi chamada!');
-
     if (!name.trim() || !price.trim() || !description.trim()) {
-      Alert.alert(
-        'Campos Obrigatórios',
-        'Por favor, preencha nome, preço e descrição.'
-      );
+      Alert.alert('Campos Obrigatórios', 'Por favor, preencha nome, preço e descrição.');
       return;
     }
     const parsedPrice = parseFloat(price.replace(',', '.'));
@@ -139,46 +119,37 @@ const AdminScreen = () => {
       return;
     }
 
+    // Adaptado para o formato do DTO (ProductCreateDTO)
     const productData = {
       nome: name.trim(),
       descricao: description.trim(),
       preco: parsedPrice,
       tipo: category,
-      imagem:
-        image.trim() || 'https://via.placeholder.com/300x200?text=Produto',
+      imagem: image.trim() || 'https://via.placeholder.com/300x200?text=Produto',
       disponivel: editingProduct ? editingProduct.disponivel : true,
     };
 
     const action = editingProduct ? 'atualizar' : 'criar';
     try {
-      if (editingProduct) {
-        await ProductService.updateProduct(editingProduct.id, productData);
+      if (editingProduct && editingProduct.id) {
+        // Usando o serviço correto
+        await productService.updateProduct(editingProduct.id, productData);
       } else {
-        await ProductService.createProduct(productData);
+        // Usando o serviço correto. Note que o DTO e a entidade Product são compatíveis.
+        await productService.createProduct(productData as any);
       }
-
-      Alert.alert(
-        'Sucesso!',
-        `Produto ${
-          action === 'atualizar' ? 'atualizado' : 'criado'
-        } com sucesso.`
-      );
+      Alert.alert('Sucesso!', `Produto ${action} com sucesso.`);
       setShowProductModal(false);
       await loadProducts();
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        `Ocorreu um erro ao ${action} o produto.`;
-      Alert.alert(`Erro ao ${action}`, errorMessage);
+      Alert.alert(`Erro ao ${action}`, error.message || 'Ocorreu um erro desconhecido.');
     }
   };
 
   const handleDeleteProduct = (productId: string | number) => {
-    console.log(productId.valueOf());
     Alert.alert(
       'Confirmar Exclusão',
-      'Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.',
+      'Tem certeza que deseja excluir este produto?',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -186,52 +157,33 @@ const AdminScreen = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              await ProductService.deleteProduct(productId);
-              setProducts((currentProducts) =>
-                currentProducts.filter((p) => p.id !== productId)
-              );
+              // Usando o serviço correto
+              await productService.deleteProduct(productId);
+              setProducts((current) => current.filter((p) => p.id !== productId));
               Alert.alert('Sucesso!', 'Produto excluído com sucesso.');
             } catch (error: any) {
-              let errorMessage = 'Não foi possível excluir o produto.';
-              if (error.response?.status === 404) {
-                errorMessage = 'Produto não encontrado no servidor.';
-              } else if (error.response?.status === 500) {
-                errorMessage = 'Erro interno do servidor.';
-              } else if (error.response?.data?.message) {
-                errorMessage = error.response.data.message;
-              } else if (error.request) {
-                errorMessage =
-                  'Sem resposta do servidor. Verifique sua conexão.';
-              }
-              Alert.alert('Erro na Exclusão', errorMessage);
+              Alert.alert('Erro na Exclusão', error.message || 'Não foi possível excluir o produto.');
             }
           },
         },
       ]
     );
   };
-
+  
+  // O restante do arquivo (função toggleAvailability, renderização, e estilos)
+  // permanece o mesmo, desde que usem `productService` em vez de `ProductService`.
+  // Por exemplo:
   const toggleAvailability = async (product: Product) => {
     const newAvailability = !product.disponivel;
     try {
-      await ProductService.toggleProductAvailability(
-        product.id,
-        newAvailability
-      );
-      setProducts((currentProducts) =>
-        currentProducts.map((p) =>
-          p.id === product.id ? { ...p, disponivel: newAvailability } : p
-        )
-      );
+      if (!product.id) return;
+      await productService.toggleProductAvailability(product.id, newAvailability);
+      setProducts(current => current.map(p => p.id === product.id ? { ...p, disponivel: newAvailability } : p));
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        'Não foi possível alterar a disponibilidade.';
-      Alert.alert('Erro', errorMessage);
-      await loadProducts();
+      Alert.alert('Erro', error.message || 'Não foi possível alterar a disponibilidade.');
     }
   };
+
 
   if (loading) {
     return (
@@ -241,18 +193,15 @@ const AdminScreen = () => {
     );
   }
 
+  // O JSX para renderização (return (...)) permanece o mesmo.
+  // Cole-o aqui. O importante é que as funções acima usem `productService` (minúsculo).
   return (
     <View style={styles.container}>
       <Header />
 
       <View style={styles.controlsContainer}>
         <View style={styles.searchContainer}>
-          <Ionicons
-            name="search"
-            size={20}
-            color="#64748b"
-            style={styles.searchIcon}
-          />
+          <Ionicons name="search" size={20} color="#64748b" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Buscar produtos..."
@@ -300,68 +249,31 @@ const AdminScreen = () => {
       <FlatList
         data={filteredProducts}
         keyExtractor={(item) => String(item.id)}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         contentContainerStyle={styles.productsList}
         renderItem={({ item: product }) => (
-          <View
-            style={[styles.card, !product.disponivel && styles.disabledCard]}
-          >
-            <Image
-              source={{
-                uri: product.images?.[0] || 'https://via.placeholder.com/150',
-              }}
-              style={styles.productImage}
-            />
+          <View style={[styles.card, !product.disponivel && styles.disabledCard]}>
+            <Image source={{ uri: product.images?.[0] || 'https://via.placeholder.com/150' }} style={styles.productImage} />
             <View style={styles.productInfo}>
               <View>
                 <View style={styles.productHeader}>
-                  <Text style={styles.productName} numberOfLines={1}>
-                    {product.name}
-                  </Text>
-                  <View
-                    style={[
-                      styles.availabilityBadge,
-                      product.disponivel
-                        ? styles.available
-                        : styles.unavailable,
-                    ]}
-                  >
-                    <Text style={styles.availabilityText}>
-                      {product.disponivel ? 'Disponível' : 'Oculto'}
-                    </Text>
+                  <Text style={styles.productName} numberOfLines={1}>{product.name}</Text>
+                  <View style={[styles.availabilityBadge, product.disponivel ? styles.available : styles.unavailable]}>
+                    <Text style={styles.availabilityText}>{product.disponivel ? 'Disponível' : 'Oculto'}</Text>
                   </View>
                 </View>
-                <Text style={styles.productDescription} numberOfLines={2}>
-                  {product.description}
-                </Text>
+                <Text style={styles.productDescription} numberOfLines={2}>{product.description}</Text>
               </View>
               <View style={styles.footer}>
-                <Text style={styles.productPrice}>
-                  R$ {product.price.toFixed(2).replace('.', ',')}
-                </Text>
+                <Text style={styles.productPrice}>R$ {product.price.toFixed(2).replace('.', ',')}</Text>
                 <View style={styles.actions}>
-                  <TouchableOpacity
-                    style={styles.iconButton}
-                    onPress={() => handleOpenModalForEdit(product)}
-                  >
+                  <TouchableOpacity style={styles.iconButton} onPress={() => handleOpenModalForEdit(product)}>
                     <Ionicons name="pencil" size={20} color="#3b82f6" />
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.iconButton}
-                    onPress={() => toggleAvailability(product)}
-                  >
-                    <Ionicons
-                      name={product.disponivel ? 'eye-off' : 'eye'}
-                      size={20}
-                      color="#f59e0b"
-                    />
+                  <TouchableOpacity style={styles.iconButton} onPress={() => toggleAvailability(product)}>
+                    <Ionicons name={product.disponivel ? 'eye-off' : 'eye'} size={20} color="#f59e0b" />
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.iconButton}
-                    onPress={() => handleDeleteProduct(product.id)}
-                  >
+                  <TouchableOpacity style={styles.iconButton} onPress={() => handleDeleteProduct(product.id)}>
                     <Ionicons name="trash" size={20} color="#ef4444" />
                   </TouchableOpacity>
                 </View>
@@ -377,7 +289,6 @@ const AdminScreen = () => {
         )}
       />
 
-      {/* Modal de formulário */}
       <Modal
         visible={showProductModal}
         animationType="slide"
@@ -386,92 +297,35 @@ const AdminScreen = () => {
       >
         <View style={styles.modalView}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>
-              {editingProduct ? 'Editar Produto' : 'Novo Produto'}
-            </Text>
+            <Text style={styles.modalTitle}>{editingProduct ? 'Editar Produto' : 'Novo Produto'}</Text>
             <TouchableOpacity onPress={() => setShowProductModal(false)}>
               <Ionicons name="close" size={28} color="#64748b" />
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={styles.formContainer}>
             <Text style={styles.label}>Nome</Text>
-            <TextInput
-              style={styles.input}
-              value={name}
-              onChangeText={setName}
-              placeholder="Digite o nome do produto"
-            />
-
+            <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Digite o nome do produto" />
             <Text style={styles.label}>Preço</Text>
-            <TextInput
-              style={styles.input}
-              value={price}
-              onChangeText={setPrice}
-              keyboardType="decimal-pad"
-              placeholder="0.00"
-            />
-
+            <TextInput style={styles.input} value={price} onChangeText={setPrice} keyboardType="decimal-pad" placeholder="0.00" />
             <Text style={styles.label}>Descrição</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={4}
-              placeholder="Descreva o produto"
-            />
-
+            <TextInput style={[styles.input, styles.textArea]} value={description} onChangeText={setDescription} multiline numberOfLines={4} placeholder="Descreva o produto" />
             <Text style={styles.label}>Categoria</Text>
             <View style={styles.categoryOptions}>
-              {(['lanche', 'bebida', 'sobremesa'] as ProductCategory[]).map(
-                (cat) => (
-                  <TouchableOpacity
-                    key={cat}
-                    style={[
-                      styles.categoryOption,
-                      category === cat && styles.categoryOptionActive,
-                    ]}
-                    onPress={() => setCategory(cat)}
-                  >
-                    <Text
-                      style={[
-                        styles.categoryOptionText,
-                        category === cat && styles.categoryOptionTextActive,
-                      ]}
-                    >
-                      {cat}
-                    </Text>
-                  </TouchableOpacity>
-                )
-              )}
+              {(['lanche', 'bebida', 'sobremesa'] as ProductCategory[]).map((cat) => (
+                <TouchableOpacity key={cat} style={[styles.categoryOption, category === cat && styles.categoryOptionActive]} onPress={() => setCategory(cat)}>
+                  <Text style={[styles.categoryOptionText, category === cat && styles.categoryOptionTextActive]}>{cat}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
-
             <Text style={styles.label}>URL da Imagem</Text>
-            <TextInput
-              style={styles.input}
-              value={image}
-              onChangeText={setImage}
-              placeholder="https://exemplo.com/imagem.jpg"
-            />
-
-            {image ? (
-              <Image source={{ uri: image }} style={styles.imagePreview} />
-            ) : null}
-
+            <TextInput style={styles.input} value={image} onChangeText={setImage} placeholder="https://exemplo.com/imagem.jpg" />
+            {image ? <Image source={{ uri: image }} style={styles.imagePreview} /> : null}
             <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={[styles.button, styles.cancelButton]}
-                onPress={() => setShowProductModal(false)}
-              >
+              <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setShowProductModal(false)}>
                 <Text style={styles.buttonText}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.saveButton]}
-                onPress={handleSubmit}
-              >
-                <Text style={[styles.buttonText, { color: '#fff' }]}>
-                  {editingProduct ? 'Salvar Alterações' : 'Criar Produto'}
-                </Text>
+              <TouchableOpacity style={[styles.button, styles.saveButton]} onPress={handleSubmit}>
+                <Text style={[styles.buttonText, { color: '#fff' }]}>{editingProduct ? 'Salvar Alterações' : 'Criar Produto'}</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -481,258 +335,57 @@ const AdminScreen = () => {
   );
 };
 
+// Cole todos os seus estilos aqui
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f1f5f9',
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  controlsContainer: {
-    flexDirection: 'row',
-    padding: 12,
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#fff',
-  },
-  searchContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f1f5f9',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    height: 44,
-    flex: 1,
-    fontSize: 16,
-  },
-  addProductButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.secondary,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 8,
-    gap: 6,
-  },
-  addProductButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  categoriesContainer: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-  categoryButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#e2e8f0',
-    marginRight: 8,
-  },
-  categoryButtonActive: {
-    backgroundColor: Colors.secondary,
-  },
-  categoryText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#334155',
-    textTransform: 'capitalize',
-  },
-  categoryTextActive: {
-    color: '#fff',
-  },
-  productsList: {
-    paddingHorizontal: 12,
-    paddingTop: 12,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    marginBottom: 12,
-    flexDirection: 'row',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  disabledCard: {
-    opacity: 0.7,
-  },
-  productImage: {
-    width: 100,
-    height: '100%',
-    backgroundColor: '#f8fafc',
-  },
-  productInfo: {
-    flex: 1,
-    padding: 12,
-    justifyContent: 'space-between',
-  },
-  productHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 6,
-  },
-  productName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1e293b',
-    flex: 1,
-  },
-  availabilityBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 12,
-    marginLeft: 8,
-  },
-  available: {
-    backgroundColor: '#dcfce7',
-  },
-  unavailable: {
-    backgroundColor: '#fee2e2',
-  },
-  availabilityText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#16a34a',
-  },
-  productDescription: {
-    fontSize: 13,
-    color: '#475569',
-    marginBottom: 8,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  productPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.secondary,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  iconButton: {
-    padding: 6,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 80,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#64748b',
-    marginTop: 16,
-  },
-  modalView: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1e293b',
-  },
-  formContainer: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#374151',
-    marginBottom: 8,
-    marginTop: 12,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#fff',
-  },
-  textArea: {
-    minHeight: 100,
-    textAlignVertical: 'top',
-  },
-  categoryOptions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  categoryOption: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: Colors.lightGray,
-    alignItems: 'center',
-  },
-  categoryOptionActive: {
-    backgroundColor: Colors.secondary,
-  },
-  categoryOptionText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#334155',
-    textTransform: 'capitalize',
-  },
-  categoryOptionTextActive: {
-    color: '#fff',
-  },
-  imagePreview: {
-    width: '100%',
-    height: 180,
-    borderRadius: 8,
-    marginTop: 16,
-    backgroundColor: '#e2e8f0',
-  },
-  modalActions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 24,
-  },
-  button: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  cancelButton: {
-    backgroundColor: '#e2e8f0',
-  },
-  saveButton: {
-    backgroundColor: '#1d4ed8',
-  },
+    container: { flex: 1, backgroundColor: '#f1f5f9' },
+    centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    controlsContainer: { flexDirection: 'row', padding: 12, alignItems: 'center', gap: 10, backgroundColor: '#fff' },
+    searchContainer: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#f1f5f9', borderRadius: 8, paddingHorizontal: 10 },
+    searchIcon: { marginRight: 8 },
+    searchInput: { height: 44, flex: 1, fontSize: 16 },
+    addProductButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.secondary, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 8, gap: 6 },
+    addProductButtonText: { color: '#fff', fontWeight: '600', fontSize: 14 },
+    categoriesContainer: { paddingHorizontal: 12, paddingVertical: 10, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e2e8f0' },
+    categoryButton: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#e2e8f0', marginRight: 8 },
+    categoryButtonActive: { backgroundColor: Colors.secondary },
+    categoryText: { fontSize: 14, fontWeight: '500', color: '#334155', textTransform: 'capitalize' },
+    categoryTextActive: { color: '#fff' },
+    productsList: { paddingHorizontal: 12, paddingTop: 12 },
+    card: { backgroundColor: '#fff', borderRadius: 12, marginBottom: 12, flexDirection: 'row', overflow: 'hidden', borderWidth: 1, borderColor: '#e2e8f0' },
+    disabledCard: { opacity: 0.7 },
+    productImage: { width: 100, height: '100%', backgroundColor: '#f8fafc' },
+    productInfo: { flex: 1, padding: 12, justifyContent: 'space-between' },
+    productHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 },
+    productName: { fontSize: 16, fontWeight: 'bold', color: '#1e293b', flex: 1 },
+    availabilityBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, marginLeft: 8 },
+    available: { backgroundColor: '#dcfce7', color: '#166534' },
+    unavailable: { backgroundColor: '#fee2e2', color: '#991b1b' },
+    availabilityText: { fontSize: 11, fontWeight: '600' },
+    productDescription: { fontSize: 13, color: '#475569', marginBottom: 8 },
+    footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    productPrice: { fontSize: 16, fontWeight: 'bold', color: Colors.secondary },
+    actions: { flexDirection: 'row', gap: 8 },
+    iconButton: { padding: 6 },
+    emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 80 },
+    emptyText: { fontSize: 16, color: '#64748b', marginTop: 16 },
+    modalView: { flex: 1, backgroundColor: '#f8fafc' },
+    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e2e8f0' },
+    modalTitle: { fontSize: 20, fontWeight: 'bold', color: '#1e293b' },
+    formContainer: { padding: 16, paddingBottom: 40 },
+    label: { fontSize: 16, fontWeight: '500', color: '#374151', marginBottom: 8, marginTop: 12 },
+    input: { borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, padding: 12, fontSize: 16, backgroundColor: '#fff' },
+    textArea: { minHeight: 100, textAlignVertical: 'top' },
+    categoryOptions: { flexDirection: 'row', gap: 8 },
+    categoryOption: { flex: 1, padding: 12, borderRadius: 8, backgroundColor: Colors.lightGray, alignItems: 'center' },
+    categoryOptionActive: { backgroundColor: Colors.secondary },
+    categoryOptionText: { fontSize: 14, fontWeight: '500', color: '#334155', textTransform: 'capitalize' },
+    categoryOptionTextActive: { color: '#fff' },
+    imagePreview: { width: '100%', height: 180, borderRadius: 8, marginTop: 16, backgroundColor: '#e2e8f0' },
+    modalActions: { flexDirection: 'row', gap: 12, marginTop: 24 },
+    button: { flex: 1, padding: 14, borderRadius: 8, alignItems: 'center' },
+    buttonText: { fontSize: 16, fontWeight: '600' },
+    cancelButton: { backgroundColor: '#e2e8f0' },
+    saveButton: { backgroundColor: '#1d4ed8' },
 });
 
 export default AdminScreen;
