@@ -14,10 +14,18 @@ public class JwtTokenProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtTokenProvider.class);
 
-    private final SecretKey jwtSecretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+    // Chave secreta longa o suficiente para o algoritmo HS512.
+    private final String jwtSecretString = "z4B&E)H@McQfTjWnZr4u7x!A%D*G-KaPdSgUkXp2s5v8y/B?E(H+MbQeThVmYq3t";
 
-    // Define o tempo de expiração do token (aqui, 24 horas em milissegundos).
-    private final long jwtExpirationInMs = 86400000;
+    private final SecretKey jwtSecretKey;
+
+    // O construtor agora converte a string diretamente para bytes, sem usar Base64.
+    public JwtTokenProvider() {
+        byte[] keyBytes = jwtSecretString.getBytes();
+        this.jwtSecretKey = Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    private final long jwtExpirationInMs = 86400000; // 24 horas
 
     public String generateToken(Authentication authentication) {
         String username = authentication.getName();
@@ -46,7 +54,7 @@ public class JwtTokenProvider {
         try {
             Jwts.parserBuilder().setSigningKey(jwtSecretKey).build().parseClaimsJws(authToken);
             return true;
-        } catch (SignatureException ex) {
+        } catch (SecurityException ex) {
             logger.error("Assinatura do JWT inválida");
         } catch (MalformedJwtException ex) {
             logger.error("Token JWT inválido");

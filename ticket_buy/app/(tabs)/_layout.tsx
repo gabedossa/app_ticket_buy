@@ -3,9 +3,9 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 // Importe os provedores aqui
-import { CartProvider } from '../src/context/CartContext';
-import { OrdersProvider } from '../src/context/OrderContext';
-import { ProductsProvider } from '../src/context/ProductContext';
+import { CartProvider } from '../../src/context/CartContext';
+import { OrdersProvider } from '../../src/context/OrderContext';
+import { ProductsProvider } from '../../src/context/ProductContext';
 // ... outros imports de ícones, etc.
 
 export default function TabsLayout() {

@@ -2,8 +2,8 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Colors } from '../src/constants/Colors';
-import { useAuth } from '../src/context/AuthContext';
+import { Colors } from '../../src/constants/Colors';
+import { useAuth } from '../../src/context/AuthContext';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');

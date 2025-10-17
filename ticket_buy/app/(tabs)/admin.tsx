@@ -14,15 +14,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Header from '../src/component/Header/Header';
-import { Colors } from '../src/constants/Colors';
-// ==================================================================
-// >> MUDANÇA IMPORTANTE AQUI <<
-// Importando o 'productService' correto do nosso arquivo central de API.
-// ==================================================================
-import { productService } from '../src/service/api';
-import { Product, ProductCategory } from '../src/types';
-import { normalizeProduct } from '../src/util/ProductUtils'; // Usaremos o normalizador
+import Header from '../../src/component/Header/Header';
+import { Colors } from '../../src/constants/Colors';
+
+import { productService } from '@/src/service/api';
+import { Product, ProductCategory } from '../../src/types';
+import { normalizeProduct } from '../../src/util/ProductUtils';
 
 const AdminScreen = () => {
   const [products, setProducts] = useState<Product[]>([]);

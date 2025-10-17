@@ -1,6 +1,7 @@
-import { useRouter } from "expo-router"; // 1. ADICIONADO: Importar o hook de navegação
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Image,
@@ -10,13 +11,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import QRCode from "react-native-qrcode-svg";
-import Header from "../src/component/Header/Header";
-import Layout from "../src/component/layout";
-import { Colors } from "../src/constants/Colors";
-import { useCart } from "../src/context/CartContext";
-import { useOrders } from "../src/context/OrderContext";
-import { CartItem } from "../src/types";
+import Header from "../../src/component/Header/Header";
+import Layout from "../../src/component/layout";
+import { Colors } from "../../src/constants/Colors";
+import { useCart } from "../../src/context/CartContext";
+import { useOrders } from "../../src/context/OrderContext";
+import { CartItem } from "../../src/types";
 
 const CartScreen = () => {
   const {
@@ -30,22 +30,32 @@ const CartScreen = () => {
   const { createOrder } = useOrders();
 
   const [isModalVisible, setModalVisible] = useState(false);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   const router = useRouter();
 
   const handleCheckout = async () => {
+    if (items.length === 0) {
+      Alert.alert("Carrinho Vazio", "Adicione itens ao carrinho antes de finalizar.");
+      return;
+    }
+    
+    setIsCheckingOut(true); // Ativa o loading
     try {
-      await createOrder(items, total);
+
+      await createOrder(items);
       setModalVisible(true);
-    } catch (error) {
-      Alert.alert("Erro", "Não foi possível finalizar o pedido.");
+    } catch (error: any) {
+      Alert.alert("Erro", error.message || "Não foi possível finalizar o pedido.");
+    } finally {
+      setIsCheckingOut(false); 
     }
   };
 
   const handleCloseModal = () => {
     setModalVisible(false);
     clearCart();
-    router.navigate("/(tabs)/HomeScreen");
+    router.push("/(tabs)/admin");
   };
 
   const handleRemoveItem = (productId: string | number) => {
@@ -63,7 +73,7 @@ const CartScreen = () => {
     return (
       <Layout>
         <View style={styles.header}>
-            <Header />
+          <Header />
         </View>
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>Seu carrinho está vazio</Text>
@@ -75,9 +85,8 @@ const CartScreen = () => {
   return (
     <Layout>
       <View style={styles.header}>
-            <Header />
-        </View>
-      <View style={styles.header}></View>
+        <Header />
+      </View>
 
       <View style={styles.container}>
         <FlatList
@@ -101,33 +110,30 @@ const CartScreen = () => {
               <View style={styles.quantityControls}>
                 <TouchableOpacity
                   style={styles.quantityButton}
-                  onPress={() =>
-                    handleUpdateQuantity(item.id, item.quantity - 1)
-                  }
+                  onPress={() => handleUpdateQuantity(item.id, item.quantity - 1)}
                 >
                   <Text style={styles.quantityButtonText}>-</Text>
                 </TouchableOpacity>
                 <Text style={styles.quantityText}>{item.quantity}</Text>
                 <TouchableOpacity
                   style={styles.quantityButton}
-                  onPress={() =>
-                    handleUpdateQuantity(item.id, item.quantity + 1)
-                  }
+                  onPress={() => handleUpdateQuantity(item.id, item.quantity + 1)}
                 >
                   <Text style={styles.quantityButtonText}>+</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.removeButton}
-                  onPress={() => handleRemoveItem(item.id)}
-                >
-                  <Text style={styles.removeButtonText}>×</Text>
                 </TouchableOpacity>
               </View>
               <Text style={styles.itemTotal}>
                 R$ {(item.price * item.quantity).toFixed(2)}
               </Text>
+              <TouchableOpacity
+                style={styles.removeButton}
+                onPress={() => handleRemoveItem(item.id)}
+              >
+                <Text style={styles.removeButtonText}>×</Text>
+              </TouchableOpacity>
             </View>
           )}
+          contentContainerStyle={{ paddingBottom: 150 }}
         />
 
         <View style={styles.footer}>
@@ -135,11 +141,17 @@ const CartScreen = () => {
             <Text style={styles.totalText}>Total: R$ {total.toFixed(2)}</Text>
             <Text style={styles.itemsCount}>{itemCount} itens</Text>
           </View>
+
           <TouchableOpacity
-            style={styles.checkoutButton}
+            style={[styles.checkoutButton, isCheckingOut && styles.checkoutButtonDisabled]}
             onPress={handleCheckout}
+            disabled={isCheckingOut}
           >
-            <Text style={styles.checkoutButtonText}>Finalizar Pedido</Text>
+            {isCheckingOut ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.checkoutButtonText}>Finalizar Pedido</Text>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -153,26 +165,13 @@ const CartScreen = () => {
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Pedido Realizado!</Text>
               <Text style={styles.modalDescription}>
-                Escaneie o QR Code para pagar:
-              </Text>
-              <View style={styles.qrCodeContainer}>
-                <QRCode
-                  value={`valor_total=${total.toFixed(
-                    2
-                  )}&timestamp=${Date.now()}`}
-                  size={220}
-                  backgroundColor="white"
-                  color="black"
-                />
-              </View>
-              <Text style={styles.modalTotal}>
-                Valor: R$ {total.toFixed(2)}
+                Acompanhe o status na tela de Admin.
               </Text>
               <TouchableOpacity
                 style={styles.modalCloseButton}
                 onPress={handleCloseModal}
               >
-                <Text style={styles.modalButtonText}>Fechar</Text>
+                <Text style={styles.modalButtonText}>OK</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -183,195 +182,36 @@ const CartScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  container: { flex: 1 },
   header: {
-    backgroundColor: "#c23b01ff",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    backgroundColor: Colors.primary,
   },
-  headerTitleContainer: { flexDirection: "row", alignItems: "center" },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "white",
-    marginLeft: 8,
-  },
-  cartButton: {
-    width: 80,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#913800ff",
-    borderRadius: 16,
-  },
-  serverStatus: {
-    fontSize: 14,
-    color: "#000",
-    opacity: 0.95,
-    fontWeight: "500",
-  },
-  admBtn: {
-    width: 80,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#d2b302ff",
-    borderRadius: 16,
-  },
-  admText: { color: "#555" },
-  container: { flex: 1, padding: 16 },
   emptyContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   emptyText: { fontSize: 18, color: "#666" },
-  cartItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    backgroundColor: "white",
-    borderRadius: 8,
-    marginBottom: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  itemImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 12,
-    backgroundColor: "#f0f0f0",
-  },
-  itemInfo: {
-    marginRight: 10,
-  },
+  cartItem: { flexDirection: "row", alignItems: "center", padding: 16, backgroundColor: "white", borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  itemImage: { width: 50, height: 50, borderRadius: 8, marginRight: 16 },
+  itemInfo: { flex: 1 },
   itemName: { fontSize: 16, fontWeight: "600", color: "#333" },
   itemPrice: { fontSize: 14, color: "#666", marginTop: 4 },
-  quantityControls: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  counterBack: {
-    width: 18,
-    height: 18,
-    position: "absolute",
-    top: 0,
-    right: 0,
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontWeight: 700,
-    backgroundColor: "rgba(255, 204, 0, 1)",
-    borderRadius: 18,
-  },
-  quantityButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.secondary,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  quantityButtonText: { color: "white", fontSize: 16, fontWeight: "bold" },
-  quantityText: { marginHorizontal: 10, fontSize: 16, fontWeight: "600" },
-  removeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#e74c3c",
-    justifyContent: "center",
-    alignItems: "center",
-    marginLeft: 10,
-  },
-  carrinhoText: { color: "#FFF" },
-  removeButtonText: { color: "white", fontSize: 16, fontWeight: "bold" },
-  itemTotal: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#2c3e50",
-    minWidth: 70,
-    textAlign: "right",
-    marginLeft: 10,
-  },
-  BackText: {
-    color: "#FFF",
-  },
-  footer: {
-    borderTopWidth: 1,
-    borderTopColor: "#e0e0e0",
-    paddingTop: 16,
-    marginTop: 16,
-  },
-  totalContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
+  quantityControls: { flexDirection: "row", alignItems: "center", marginHorizontal: 16 },
+  quantityButton: { width: 32, height: 32, borderRadius: 16, backgroundColor: Colors.lightGray, justifyContent: "center", alignItems: "center" },
+  quantityButtonText: { color: Colors.primary, fontSize: 18, fontWeight: "bold" },
+  quantityText: { marginHorizontal: 12, fontSize: 16, fontWeight: "600" },
+  itemTotal: { fontSize: 16, fontWeight: "bold", minWidth: 80, textAlign: "right" },
+  removeButton: { width: 32, height: 32, borderRadius: 16, justifyContent: "center", alignItems: "center", marginLeft: 8 },
+  removeButtonText: { color: "red", fontSize: 22, fontWeight: "bold" },
+  footer: { borderTopWidth: 1, borderTopColor: "#e0e0e0", padding: 16, backgroundColor: 'white', position: 'absolute', bottom: 0, left: 0, right: 0 },
+  totalContainer: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   totalText: { fontSize: 20, fontWeight: "bold", color: "#2c3e50" },
   itemsCount: { fontSize: 14, color: "#666" },
-  checkoutButton: {
-    backgroundColor: Colors.secondary,
-    padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-  },
+  checkoutButton: { backgroundColor: Colors.secondary, padding: 16, borderRadius: 8, alignItems: "center" },
+  checkoutButtonDisabled: { backgroundColor: Colors.gray }, // Estilo para botão desabilitado
   checkoutButtonText: { color: "white", fontSize: 16, fontWeight: "bold" },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
-  },
-  modalContent: {
-    backgroundColor: "white",
-    padding: 24,
-    borderRadius: 16,
-    width: "100%",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#1e293b",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  modalDescription: {
-    fontSize: 16,
-    color: "#475569",
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  qrCodeContainer: {
-    marginBottom: 20,
-    padding: 10,
-    backgroundColor: "white",
-    borderRadius: 8,
-  },
-  modalTotal: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#1e293b",
-    marginBottom: 24,
-  },
-  modalCloseButton: {
-    backgroundColor: "#4a90e2",
-    paddingVertical: 14,
-    borderRadius: 8,
-    width: "100%",
-    alignItems: "center",
-  },
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0, 0, 0, 0.7)", justifyContent: "center", alignItems: "center", paddingHorizontal: 20 },
+  modalContent: { backgroundColor: "white", padding: 24, borderRadius: 16, width: "100%", alignItems: "center" },
+  modalTitle: { fontSize: 24, fontWeight: "bold", color: "#1e293b", marginBottom: 8, textAlign: "center" },
+  modalDescription: { fontSize: 16, color: "#475569", marginBottom: 20, textAlign: "center" },
+  modalCloseButton: { backgroundColor: Colors.primary, paddingVertical: 14, borderRadius: 8, width: "100%", alignItems: "center" },
   modalButtonText: { color: "white", fontSize: 16, fontWeight: "bold" },
 });
 

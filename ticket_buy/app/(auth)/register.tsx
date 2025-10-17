@@ -2,8 +2,8 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity } from 'react-native';
 
-import { Colors } from '../../app/src/constants/Colors';
-import { authService } from '../../app/src/service/api';
+import { Colors } from '../../src/constants/Colors';
+import { authService } from '../../src/service/api';
 
 export default function RegisterScreen() {
   const [nome, setNome] = useState('');

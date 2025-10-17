@@ -3,7 +3,7 @@
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { AuthProvider, useAuth } from '../src/context/AuthContext';
 
 // Este componente gerencia a lógica de navegação
 const RootNavigation = () => {

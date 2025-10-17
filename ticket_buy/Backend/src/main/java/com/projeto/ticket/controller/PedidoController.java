@@ -1,16 +1,17 @@
 package com.projeto.ticket.controller;
 
+import com.projeto.ticket.dto.PedidoRequest;
 import com.projeto.ticket.model.Pedido;
 import com.projeto.ticket.service.PedidoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/pedidos")
-@CrossOrigin(origins = "*")
 public class PedidoController {
 
     @Autowired
@@ -28,8 +29,9 @@ public class PedidoController {
     }
 
     @PostMapping
-    public Pedido criar(@RequestBody Pedido pedido) {
-        return pedidoService.createPedido(pedido);
+    public Pedido criar(@RequestBody PedidoRequest pedidoRequest, Principal principal) {
+        String userEmail = principal.getName();
+        return pedidoService.createPedido(pedidoRequest, userEmail);
     }
 
     @PutMapping("/{id}")
