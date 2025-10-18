@@ -44,7 +44,7 @@ export interface Product {
   price: number;
   tipo: ProductCategory;
   description: string;
-  images: string[];
+  images?: string[];
   disponivel: boolean;
 }
 

@@ -1,4 +1,4 @@
-// Caminho: src/utils/productUtils.ts
+// src/utils/productUtils.ts
 
 import { Product, ProductAPI, ProductCategory } from '../types';
 
