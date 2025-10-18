@@ -1,169 +1,109 @@
-// src/services/api.ts
-import * as SecureStore from 'expo-secure-store';
-import { AuthResponse, LoginRequest, Order, Product, RegisterRequest } from '../types';
+// src/service/api.ts
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios, { AxiosError } from 'axios';
+import { AuthTokens, LoginRequest, Order, Product, RegisterRequest } from '../types';
 
 const API_BASE_URL = 'http://192.168.18.7:8080/api';
+const ACCESS_TOKEN_KEY = 'user_access_token';
+const REFRESH_TOKEN_KEY = 'user_refresh_token';
 
-export const fetchAPI = async (endpoint: string, options: RequestInit = {}) => {
-  const url = `${API_BASE_URL}${endpoint}`;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 20000);
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-  try {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
-    const token = await SecureStore.getItemAsync('my-jwt');
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+let isRefreshing = false;
+let failedQueue: { resolve: (value: unknown) => void; reject: (reason?: any) => void; }[] = [];
+
+const processQueue = (error: AxiosError | null, token: string | null = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
     }
-    if (options.headers) {
-      Object.assign(headers, options.headers);
-    }
-    
-    console.log(`🔄 Fazendo requisição para: ${url}`);
-    
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal,
-      headers: headers,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({ message: `HTTP error! status: ${response.status}` }));
-        if (response.status === 403) {
-            throw new Error('Acesso negado. Faça o login novamente.');
-        }
-        throw new Error(errorBody.message || `HTTP error! status: ${response.status}`);
-    }
-
-    // ==================================================================
-    // >> CORREÇÃO ADICIONADA AQUI <<
-    // Se a resposta for '204 No Content', não há corpo para processar,
-    // então retornamos 'undefined' para sinalizar sucesso sem dados.
-    // ==================================================================
-    if (response.status === 204) {
-      console.log(`✅ Resposta 204 No Content recebida de: ${url}`);
-      return;
-    }
-    
-    const data = await response.json();
-    console.log(`✅ Resposta recebida de: ${url}`);
-    return data;
-
-  } catch (error: any) {
-    clearTimeout(timeoutId);
-    if (error.name === 'AbortError') {
-      console.warn('⏰ Timeout na requisição');
-      throw new Error('O servidor demorou mais de 20 segundos para responder (Timeout).');
-    }
-    console.warn(`❌ API Request failed for ${url}:`, error.message);
-    throw error;
-  }
+  });
+  failedQueue = [];
 };
 
-// ... O restante do arquivo (authService, productService, etc.) permanece exatamente o mesmo ...
+api.interceptors.response.use(
+  (response) => response.data,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as typeof error.config & { _retry?: boolean };
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise(function(resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          if(originalRequest.headers) {
+            originalRequest.headers['Authorization'] = 'Bearer ' + token;
+          }
+          return api(originalRequest);
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const refreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+      if (!refreshToken) {
+        processQueue(error, null);
+        return Promise.reject(error);
+      }
+
+      try {
+        const { data: tokens }: { data: AuthTokens } = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken });
+        
+        await AsyncStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
+        await AsyncStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
+        api.defaults.headers.common['Authorization'] = `Bearer ${tokens.accessToken}`;
+        if (originalRequest.headers) {
+          originalRequest.headers['Authorization'] = `Bearer ${tokens.accessToken}`;
+        }
+        
+        processQueue(null, tokens.accessToken);
+        return api(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError as AxiosError, null);
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+
 export const authService = {
-    async login(credentials: LoginRequest): Promise<AuthResponse> {
-        const response = await fetchAPI('/auth/login', {
-          method: 'POST',
-          body: JSON.stringify(credentials),
-        });
-        return response;
-      },
-    
-      async register(userData: RegisterRequest): Promise<{ message: string }> {
-        const response = await fetchAPI('/auth/register', {
-          method: 'POST',
-          body: JSON.stringify(userData),
-        });
-        return response;
-      },
+  login: (credentials: LoginRequest): Promise<AuthTokens> => {
+    return api.post('/auth/login', credentials);
+  },
+  register: (userData: RegisterRequest): Promise<{ message: string }> => {
+    return api.post('/auth/register', userData);
+  },
 };
 
 export const productService = {
-    async getProducts(): Promise<Product[]> {
-      const products = await fetchAPI('/produtos');
-      return products;
-    },
-  
-    async createProduct(productData: Omit<Product, 'id'>): Promise<Product> {
-      const newProduct = await fetchAPI('/produtos', {
-        method: 'POST',
-        body: JSON.stringify(productData),
-      });
-      return newProduct;
-    },
-  
-    async getProductById(id: string | number): Promise<Product> {
-      const product = await fetchAPI(`/produtos/${id}`);
-      return product;
-    },
-  
-    async updateProduct(id: string | number, productData: Partial<Product>): Promise<Product> {
-      const updatedProduct = await fetchAPI(`/produtos/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(productData),
-      });
-      return updatedProduct;
-    },
-  
-    async deleteProduct(id: string | number): Promise<void> {
-      await fetchAPI(`/produtos/${id}`, {
-        method: 'DELETE',
-      });
-    },
-
-    async toggleProductAvailability(id: string | number, disponivel: boolean): Promise<Product> {
-        try {
-          const updatedProduct = await fetchAPI(`/produtos/${id}/disponibilidade`, {
-            method: 'PATCH',
-            body: JSON.stringify({ disponivel }),
-          });
-          return updatedProduct;
-        } catch (error) {
-          console.error(`❌ Erro ao alterar disponibilidade com PATCH, tentando PUT como fallback...`);
-          const updatedProduct = await fetchAPI(`/produtos/${id}`, {
-              method: 'PUT',
-              body: JSON.stringify({ disponivel }),
-          });
-          return updatedProduct;
-        }
-      },
+  getProducts: (): Promise<Product[]> => api.get('/produtos'),
+  getProductById: (id: string | number): Promise<Product> => api.get(`/produtos/${id}`),
+  createProduct: (productData: any): Promise<Product> => api.post('/produtos', productData),
+  updateProduct: (id: string | number, productData: Partial<Product>): Promise<Product> => api.put(`/produtos/${id}`, productData),
+  deleteProduct: (id: string | number): Promise<void> => api.delete(`/produtos/${id}`),
+  toggleProductAvailability: (id: string | number, disponivel: boolean): Promise<Product> => api.patch(`/produtos/${id}/disponibilidade`, { disponivel }),
+  getProductsByCategory: (categoria: string): Promise<Product[]> => api.get(`/produtos/categoria/${categoria}`),
 };
 
 export const orderService = {
-    async getOrders(): Promise<Order[]> {
-        const orders = await fetchAPI('/pedidos');
-        return orders;
-    },
-    
-    async createOrder(orderData: Omit<Order, 'id'>): Promise<Order> {
-      const newOrder = await fetchAPI('/pedidos', {
-        method: 'POST',
-        body: JSON.stringify(orderData),
-      });
-      return newOrder;
-    },
-    
-    async updateOrderStatus(orderId: string | number, status: string): Promise<void> {
-      await fetchAPI(`/pedidos/${orderId}`, {
-        method: 'PUT', 
-        body: JSON.stringify({ status }),
-      });
-    },
-    
-    async getOrderById(id: string | number): Promise<Order> {
-      const order = await fetchAPI(`/pedidos/${id}`);
-      return order;
-    },
-    
-    async deleteOrder(id: string | number): Promise<void> {
-      await fetchAPI(`/pedidos/${id}`, {
-        method: 'DELETE',
-      });
-    },
+  getOrders: (): Promise<Order[]> => api.get('/pedidos'),
+  getOrderById: (id: string | number): Promise<Order> => api.get(`/pedidos/${id}`),
+  createOrder: (orderData: any): Promise<Order> => api.post('/pedidos', orderData),
+  updateOrderStatus: (orderId: string | number, status: string): Promise<Order> => api.patch(`/pedidos/${orderId}`, { status }),
+  deleteOrder: (id: string | number): Promise<void> => api.delete(`/pedidos/${id}`),
+  getOrdersByStatus: (status: string): Promise<Order[]> => api.get(`/pedidos/status/${status}`),
 };
+
+export default api;

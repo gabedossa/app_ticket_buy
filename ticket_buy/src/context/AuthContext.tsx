@@ -1,42 +1,64 @@
-import * as SecureStore from 'expo-secure-store';
+// src/context/AuthContext.tsx
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { authService } from '../service/api'; // <<< MUDANÇA IMPORTANTE AQUI
-import { AuthContextType, AuthState, LoginRequest, ProviderProps, RegisterRequest } from '../types';
+import api, { authService } from '../service/api';
+import { LoginRequest } from '../types';
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const ACCESS_TOKEN_KEY = 'user_access_token';
+const REFRESH_TOKEN_KEY = 'user_refresh_token';
 
-const TOKEN_KEY = 'my-jwt';
+interface AuthState {
+  accessToken: string | null;
+  refreshToken: string | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+}
 
-export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
+interface AuthContextData {
+  signIn(credentials: LoginRequest): Promise<void>;
+  signOut(): void;
+  authState: AuthState;
+  setAuthState: React.Dispatch<React.SetStateAction<AuthState>>;
+}
+
+const AuthContext = createContext<AuthContextData>({} as AuthContextData);
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [authState, setAuthState] = useState<AuthState>({
-    token: null,
-    isAuthenticated: false,
     isLoading: true,
-    user: null,
+    accessToken: null,
+    refreshToken: null,
+    isAuthenticated: false,
   });
 
   useEffect(() => {
     const bootstrapAsync = async () => {
-      let userToken: string | null = null;
       try {
-        userToken = await SecureStore.getItemAsync(TOKEN_KEY);
-      } catch (e) {
-        console.error('Falha ao carregar o token', e);
-      }
+        const accessToken = await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
+        const refreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
 
-      if (userToken) {
+        if (accessToken && refreshToken) {
+          api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+          setAuthState({
+            accessToken,
+            refreshToken,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+        } else {
+          setAuthState({
+            accessToken: null,
+            refreshToken: null,
+            isAuthenticated: false,
+            isLoading: false,
+          });
+        }
+      } catch (e) {
         setAuthState({
-          token: userToken,
-          isAuthenticated: true,
-          isLoading: false,
-          user: null,
-        });
-      } else {
-        setAuthState({
-          token: null,
-          isAuthenticated: false,
-          isLoading: false,
-          user: null,
+            accessToken: null,
+            refreshToken: null,
+            isAuthenticated: false,
+            isLoading: false,
         });
       }
     };
@@ -44,51 +66,63 @@ export const AuthProvider: React.FC<ProviderProps> = ({ children }) => {
     bootstrapAsync();
   }, []);
 
-  const signIn = async (data: LoginRequest) => {
-    // Usando o serviço importado do lugar correto
-    const response = await authService.login(data);
-    const { token } = response;
+  const signIn = async (credentials: LoginRequest) => {
+    const response = await authService.login(credentials) as any; // Recebe como 'any' para inspecionar
+    
+    // Validação robusta da resposta do servidor
+    if (!response) {
+      throw new Error("O servidor não retornou uma resposta.");
+    }
+    
+    const { accessToken, refreshToken, token } = response;
 
-    await SecureStore.setItemAsync(TOKEN_KEY, token);
+    // A lógica de refresh token requer accessToken e refreshToken.
+    if (accessToken && refreshToken) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+      await AsyncStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+      await AsyncStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
 
-    setAuthState({
-      token: token,
-      isAuthenticated: true,
-      isLoading: false,
-      user: null,
-    });
-  };
-
-  const signUp = async (data: RegisterRequest) => {
-    // Usando o serviço importado do lugar correto
-    await authService.register(data);
-
+      setAuthState({
+        accessToken,
+        refreshToken,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+    } 
+    // Fallback para a resposta antiga (apenas token), mas avisa sobre a limitação.
+    else if (token && typeof token === 'string') {
+        throw new Error("O servidor retornou um formato de token antigo. A funcionalidade de renovação de token (refresh token) não irá funcionar. Por favor, atualize o backend para retornar 'accessToken' e 'refreshToken'.");
+    }
+    // Se nenhum dos formatos esperados for encontrado
+    else {
+      console.error('Resposta de login recebida:', response);
+      throw new Error("A resposta do servidor não contém os tokens esperados ('accessToken' e 'refreshToken').");
+    }
   };
 
   const signOut = async () => {
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
+    delete api.defaults.headers.common['Authorization'];
+    await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
+    await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
     setAuthState({
-      token: null,
+      accessToken: null,
+      refreshToken: null,
       isAuthenticated: false,
       isLoading: false,
-      user: null,
     });
   };
 
-  const value = {
-    authState,
-    signIn,
-    signOut,
-    signUp,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ authState, setAuthState, signIn, signOut }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
-export const useAuth = () => {
+export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
+}
