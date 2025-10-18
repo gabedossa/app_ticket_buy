@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Colors } from '../constants/Colors';
-import { Order } from '../types';
+import { Order } from '../types/Tipos';
 
 const statusDetails = {
   'em preparo': {

@@ -1,6 +1,6 @@
 import React, { createContext, PropsWithChildren, useCallback, useContext, useMemo, useState } from 'react';
 // Importando diretamente da nossa fonte da verdade de tipos!
-import { CartItem, Product } from '../types';
+import { CartItem, Product } from '../types/Tipos';
 
 interface ICartContext {
   items: CartItem[];

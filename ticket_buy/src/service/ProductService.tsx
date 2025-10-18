@@ -1,6 +1,6 @@
 // services/productService.ts
 import axios from 'axios';
-import { Product, ProductCreateDTO } from '../types';
+import { Product, ProductCreateDTO } from '../types/Tipos';
 
 const API_URL = 'http://192.168.18.7:8080/api/produtos';
 

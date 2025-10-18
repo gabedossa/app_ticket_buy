@@ -1,5 +1,5 @@
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { Product } from '../types'; // Certifique-se que o caminho para seus types está correto
+import { Product } from '../types/Tipos'; // Certifique-se que o caminho para seus types está correto
 
 // PASSO 1: Importe APENAS o productService, usando chaves {}
 import { productService } from '../service/api';

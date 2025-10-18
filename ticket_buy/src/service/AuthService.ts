@@ -1,4 +1,4 @@
-import { AuthResponse, LoginRequest, RegisterRequest } from '../types/index';
+import { AuthResponse, LoginRequest, RegisterRequest } from '../types/Tipos';
 import { fetchAPI } from './api';
 
 export const AuthService = {

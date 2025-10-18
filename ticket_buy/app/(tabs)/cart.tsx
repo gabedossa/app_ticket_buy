@@ -16,7 +16,7 @@ import Layout from "../../src/component/layout";
 import { Colors } from "../../src/constants/Colors";
 import { useCart } from "../../src/context/CartContext";
 import { useOrders } from "../../src/context/OrderContext";
-import { CartItem } from "../../src/types";
+import { CartItem } from "../../src/types/Tipos";
 
 const CartScreen = () => {
   const {

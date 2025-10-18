@@ -18,7 +18,7 @@ import Header from '../../src/component/Header/Header';
 import { Colors } from '../../src/constants/Colors';
 
 import { productService } from '@/src/service/api';
-import { Product, ProductCategory } from '../../src/types';
+import { Product, ProductCategory } from '../../src/types/Tipos';
 import { normalizeProduct } from '../../src/util/ProductUtils';
 
 const AdminScreen = () => {

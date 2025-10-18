@@ -1,6 +1,6 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { ProductCategory } from '../../types';
+import type { ProductCategory } from '../../types/Tipos';
 
 type CategoryFilterProps = {
   categories: (ProductCategory | 'all')[];

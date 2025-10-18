@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useState } from 'react';
 import { orderService } from '../service/api';
-import { CartItem, Order, OrderStatus, ProviderProps } from '../types';
+import { CartItem, Order, OrderStatus, ProviderProps } from '../types/Tipos';
 
 interface OrdersContextType {
   orders: Order[];

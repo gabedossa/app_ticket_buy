@@ -4,7 +4,7 @@ import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Colors } from '../src/constants/Colors';
 import { useCart } from '../src/context/CartContext';
-import { Product } from '../src/types/index';
+import { Product } from '../src/types/Tipos';
 
 export default function ModalProductScreen() {
   const params = useLocalSearchParams();

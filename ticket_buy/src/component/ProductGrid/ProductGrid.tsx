@@ -1,6 +1,6 @@
 import React from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Product } from '../../types';
+import { Product } from '../../types/Tipos';
 import ProductCard from '../ProductCard/ProductCard';
 
 type ProductGridProps = {

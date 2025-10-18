@@ -2,7 +2,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import api, { authService } from '../service/api';
-import { LoginRequest } from '../types';
+import { LoginRequest } from '../types/Tipos';
 
 const ACCESS_TOKEN_KEY = 'user_access_token';
 const REFRESH_TOKEN_KEY = 'user_refresh_token';
@@ -67,9 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async (credentials: LoginRequest) => {
-    const response = await authService.login(credentials) as any; // Recebe como 'any' para inspecionar
-    
-    // Validação robusta da resposta do servidor
+    const response = await authService.login(credentials) as any; 
     if (!response) {
       throw new Error("O servidor não retornou uma resposta.");
     }
@@ -89,11 +87,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading: false,
       });
     } 
-    // Fallback para a resposta antiga (apenas token), mas avisa sobre a limitação.
+    
     else if (token && typeof token === 'string') {
         throw new Error("O servidor retornou um formato de token antigo. A funcionalidade de renovação de token (refresh token) não irá funcionar. Por favor, atualize o backend para retornar 'accessToken' e 'refreshToken'.");
     }
-    // Se nenhum dos formatos esperados for encontrado
+
     else {
       console.error('Resposta de login recebida:', response);
       throw new Error("A resposta do servidor não contém os tokens esperados ('accessToken' e 'refreshToken').");

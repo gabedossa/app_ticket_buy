@@ -1,6 +1,6 @@
 import React from "react";
 import { Image, Modal, Text, TouchableOpacity, View } from "react-native";
-import { Product } from "../../types";
+import { Product } from "../../types/Tipos";
 import { styles } from "../ModalProduct/ModalProductStyle";
 
 interface ModalProductProps {

@@ -17,7 +17,7 @@ import ProductCard from "../../src/component/ProductCard/ProductCard";
 import { useAuth } from "../../src/context/AuthContext";
 import { useCart } from "../../src/context/CartContext";
 import { productService } from "../../src/service/api";
-import { Product, ProductCategory } from "../../src/types";
+import { Product, ProductCategory } from "../../src/types/Tipos";
 import { normalizeProduct } from "../../src/util/ProductUtils";
 
 const HomeScreen = () => {

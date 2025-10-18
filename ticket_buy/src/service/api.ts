@@ -1,7 +1,7 @@
 // src/service/api.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosError } from 'axios';
-import { AuthTokens, LoginRequest, Order, Product, RegisterRequest } from '../types';
+import { AuthTokens, LoginRequest, Order, Product, RegisterRequest } from '../types/Tipos';
 
 const API_BASE_URL = 'http://192.168.18.7:8080/api';
 const ACCESS_TOKEN_KEY = 'user_access_token';

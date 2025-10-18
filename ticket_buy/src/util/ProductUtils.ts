@@ -1,6 +1,6 @@
 // src/utils/productUtils.ts
 
-import { Product, ProductAPI, ProductCategory } from '../types';
+import { Product, ProductAPI, ProductCategory } from '../types/Tipos';
 
 export const normalizeProduct = (productData: ProductAPI): Product => {
   return {
