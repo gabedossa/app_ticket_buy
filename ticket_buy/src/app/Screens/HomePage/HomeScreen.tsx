@@ -1,12 +1,11 @@
 import { View } from "react-native";
 import HeaderNavBar from "../../Components/HeaderNavBar/HeaderNavBar";
 
-const LoginScreen = () => {
+const HomeScreen = () => {
   return (
     <View>
       <HeaderNavBar />
     </View>
   );
 };
-
-export default LoginScreen;
+export default HomeScreen;

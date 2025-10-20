@@ -1,6 +1,5 @@
 import React from 'react';
 
-// --- Tipos Gerais ---
 export type ProductCategory = 'lanche' | 'bebida' | 'sobremesa';
 
 export interface LoginRequest {
@@ -66,8 +65,6 @@ export interface ProviderProps {
   children: React.ReactNode;
 }
 
-
-// --- Tipos de Contexto ---
 export interface CartContextType {
   items: CartItem[];
   addToCart: (product: Product) => void;
@@ -83,8 +80,6 @@ export interface OrderContextType {
   createOrder: (items: CartItem[], total: number) => Promise<void>;
 }
 
-
-// --- Tipos de Props de Componentes ---
 export interface MenuHeaderProps {
   title?: string;
   cartItemCount?: number;
