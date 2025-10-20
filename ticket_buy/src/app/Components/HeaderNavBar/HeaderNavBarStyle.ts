@@ -1,22 +1,21 @@
+// HeaderNavBarStyle.js ATUALIZADO
 import { StyleSheet } from "react-native";
 import Colors from "../../../Constants/Colors";
 
 const HeaderStyles = StyleSheet.create({
-  NavBackground: {
+  headerContainer: {
     width: "100%",
+    height: 80,
     backgroundColor: Colors.primary,
-  },
-  container: {
-    display: "flex",
     flexDirection: "row",
     alignItems: "center",
-    paddingTop:32,
-    height: 80,
+    paddingTop: 32,
   },
-  justifyNav:{
-    width:'100%',
-    flexDirection: 'row', 
+  justifyNav: {
+    width: '100%',
+    flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
   headerTitle: {
     color: Colors.white,
@@ -24,20 +23,11 @@ const HeaderStyles = StyleSheet.create({
     fontWeight: "bold",
   },
   titleContainer: {
-    display: "flex",
     flexDirection: "row",
     alignItems: "center",
-    marginLeft:24,
+    marginLeft: 24,
     gap: 8,
   },
-  screenContainer: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  contentContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
 });
+
 export default HeaderStyles;
