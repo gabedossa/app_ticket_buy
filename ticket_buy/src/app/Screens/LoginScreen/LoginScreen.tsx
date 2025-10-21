@@ -1,10 +1,9 @@
-import { View } from "react-native";
-import HeaderNavBar from "../../Components/HeaderNavBar/HeaderNavBar";
+import { Text, View } from "react-native";
 
 const LoginScreen = () => {
   return (
     <View>
-      <HeaderNavBar />
+      <Text>Hello world</Text>
     </View>
   );
 };
